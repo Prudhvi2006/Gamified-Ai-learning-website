@@ -1,0 +1,2094 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Haunted Code Mansion — AI Edition</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel+Decorative:wght@400;700;900&family=Cinzel:wght@400;600;700&family=Fira+Code:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+/* ═══════════════════════════════════════════════════
+   ROOT VARIABLES & RESET
+═══════════════════════════════════════════════════ */
+:root {
+  --bg: #03020a;
+  --surface: #07060f;
+  --surface2: #0d0c1e;
+  --surface3: #12112a;
+  --border: rgba(255,255,255,0.06);
+  --border2: rgba(255,255,255,0.12);
+  --red: #ff1a4b;
+  --red-dim: rgba(255,26,75,0.15);
+  --green: #00ffa3;
+  --green-dim: rgba(0,255,163,0.12);
+  --purple: #a855f7;
+  --purple-dim: rgba(168,85,247,0.12);
+  --amber: #f59e0b;
+  --amber-dim: rgba(245,158,11,0.12);
+  --blue: #3b82f6;
+  --cyan: #06b6d4;
+  --text: rgba(255,255,255,0.88);
+  --text-dim: rgba(255,255,255,0.4);
+  --text-faint: rgba(255,255,255,0.18);
+  --glow-red: 0 0 30px rgba(255,26,75,0.5);
+  --glow-green: 0 0 30px rgba(0,255,163,0.4);
+  --glow-purple: 0 0 30px rgba(168,85,247,0.5);
+}
+*,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { font-size: 16px; }
+* { -webkit-user-select:none; -moz-user-select:none; user-select:none; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Fira Code', monospace;
+  overflow: hidden;
+  height: 100vh;
+  width: 100vw;
+  cursor: default;
+  user-select: none;
+}
+button { cursor: pointer; font-family: inherit; }
+input { font-family: inherit; }
+
+/* ═══════════════════════════════════════════════════
+   KEYFRAMES
+═══════════════════════════════════════════════════ */
+@keyframes fog-drift { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+@keyframes flicker-candle { 0%,100%{opacity:.9;transform:scaleY(1) scaleX(1)} 25%{opacity:.7;transform:scaleY(1.12) scaleX(.92)} 75%{opacity:.85;transform:scaleY(.95) scaleX(1.05)} }
+@keyframes bat-fly { 0%{transform:translateX(110vw) translateY(var(--bat-y))} 100%{transform:translateX(-15vw) translateY(var(--bat-y))} }
+@keyframes bat-wings { 0%{transform:scaleY(1)} 50%{transform:scaleY(-0.4)} 100%{transform:scaleY(1)} }
+@keyframes ghost-float { 0%,100%{transform:translateY(0) rotate(-1deg)} 50%{transform:translateY(-18px) rotate(1deg)} }
+@keyframes ghost-wander { 0%{transform:translateX(0)} 50%{transform:translateX(20px)} 100%{transform:translateX(0)} }
+@keyframes moon-pulse { 0%{filter:drop-shadow(0 0 40px rgba(255,230,140,.6)) drop-shadow(0 0 80px rgba(255,180,50,.3))} 100%{filter:drop-shadow(0 0 70px rgba(255,230,140,.9)) drop-shadow(0 0 120px rgba(255,180,50,.5))} }
+@keyframes lightning-flash { 0%,100%{opacity:0} 5%,15%{opacity:.85} 10%{opacity:.15} }
+@keyframes rain-fall { 0%{transform:translateY(-20px);opacity:0} 5%{opacity:.45} 95%{opacity:.2} 100%{transform:translateY(105vh);opacity:0} }
+@keyframes shake { 0%,100%{transform:translate(0)} 15%,45%,75%{transform:translate(-7px,-3px) rotate(-.5deg)} 30%,60%,90%{transform:translate(7px,3px) rotate(.5deg)} }
+@keyframes pop-in { 0%{transform:scale(.85);opacity:0} 70%{transform:scale(1.02)} 100%{transform:scale(1);opacity:1} }
+@keyframes slide-up { 0%{transform:translateY(24px);opacity:0} 100%{transform:translateY(0);opacity:1} }
+@keyframes xp-float { 0%{transform:translateY(0);opacity:1} 100%{transform:translateY(-70px);opacity:0} }
+@keyframes blink-cursor { 50%{opacity:0} }
+@keyframes pulse-ring { 0%{box-shadow:0 0 0 0 rgba(168,85,247,.6)} 100%{box-shadow:0 0 0 16px rgba(168,85,247,0)} }
+@keyframes gate-open-l { 0%{transform:perspective(1400px) rotateY(0)} 100%{transform:perspective(1400px) rotateY(-108deg)} }
+@keyframes gate-open-r { 0%{transform:perspective(1400px) rotateY(0)} 100%{transform:perspective(1400px) rotateY(108deg)} }
+@keyframes zoom-rush { 0%{transform:scale(1) translateY(0)} 100%{transform:scale(6) translateY(8%);opacity:0} }
+@keyframes scanlines { 0%{background-position:0 0} 100%{background-position:0 4px} }
+@keyframes door-jiggle { 0%,100%{transform:rotate(0)} 20%{transform:rotate(-2deg)} 40%{transform:rotate(2deg)} 60%{transform:rotate(-1deg)} 80%{transform:rotate(1deg)} }
+@keyframes swarm-fly { 0%{transform:translate(-50%,-50%) scale(.1);opacity:0} 8%{opacity:1} 100%{transform:translate(var(--tx),var(--ty)) scale(4);opacity:0} }
+@keyframes text-flicker { 0%,100%{opacity:1} 8%{opacity:.8} 15%{opacity:1} 22%{opacity:.6} 30%{opacity:1} }
+
+/* ═══════════════════════════════════════════════════
+   ATMOSPHERIC LAYERS
+═══════════════════════════════════════════════════ */
+#fog-layer {
+  position: fixed; inset: 0; z-index: 8; pointer-events: none;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='800' height='600'%3E%3Cfilter id='fog'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.015 0.012' numOctaves='5' seed='2' result='noise'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeBlend in='SourceGraphic' mode='multiply'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' fill='rgba(20,10,40,0.4)' filter='url(%23fog)'/%3E%3C/svg%3E");
+  width: 300%; animation: fog-drift 60s linear infinite; opacity: .35;
+}
+#vignette { position: fixed; inset: 0; z-index: 9; pointer-events: none; background: radial-gradient(ellipse at 50% 50%, transparent 35%, rgba(0,0,0,.7) 80%, rgba(0,0,0,.95) 100%); }
+#crt-overlay {
+  position: fixed; inset: 0; z-index: 900; pointer-events: none;
+  background: repeating-linear-gradient(0deg, rgba(0,0,0,.12) 0px, rgba(0,0,0,.12) 1px, transparent 1px, transparent 3px);
+  animation: scanlines 0.1s linear infinite; opacity: .5;
+}
+#lightning-el { position: fixed; inset: 0; z-index: 99; background: #e8f0ff; opacity: 0; pointer-events: none; transition: opacity .05s; }
+.rain-drop { position: fixed; top: 0; width: 1px; background: linear-gradient(to bottom, transparent, rgba(150,180,255,.5)); pointer-events: none; z-index: 7; animation: rain-fall linear infinite; }
+
+/* ═══════════════════════════════════════════════════
+   SCREENS
+═══════════════════════════════════════════════════ */
+.screen { position: fixed; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 20; }
+.screen.hidden { display: none !important; }
+
+/* ═══════════════════════════════════════════════════
+   START SCREEN
+═══════════════════════════════════════════════════ */
+#screen-start { background: linear-gradient(to bottom, rgba(10,5,25,0) 0%, rgba(3,2,10,.4) 60%, #000 100%); }
+
+#mansion-wrap {
+  position: absolute; bottom: 0; left: 0; right: 0; height: 80%;
+  display: flex; justify-content: center; align-items: flex-end; z-index: 1;
+}
+#mansion-svg { width: 100%; max-width: 1100px; height: auto; filter: drop-shadow(0 40px 100px rgba(0,0,0,1)); }
+
+.bat { position: fixed; pointer-events: none; z-index: 6; animation: bat-fly linear infinite; }
+.bat svg { animation: bat-wings .15s ease-in-out infinite; }
+.swarm-bat { position: fixed; pointer-events: none; z-index: 999; animation: swarm-fly cubic-bezier(.2,.6,.4,.95) forwards; }
+.swarm-bat svg { animation: bat-wings .12s ease-in-out infinite; }
+
+.start-title {
+  position: relative; z-index: 5;
+  font-family: 'Cinzel Decorative', serif;
+  font-size: clamp(36px,7vw,80px);
+  font-weight: 900;
+  text-align: center;
+  line-height: 1.05;
+  background: linear-gradient(180deg, #fff8f8 0%, #ffbbbb 40%, #dd0033 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  filter: drop-shadow(0 0 25px rgba(255,0,50,.6));
+  animation: text-flicker 8s ease-in-out infinite;
+  margin-bottom: 6px;
+}
+.start-sub { position: relative; z-index: 5; font-family: 'Cinzel', serif; font-size: 11px; letter-spacing: 6px; color: rgba(255,255,255,.22); margin-bottom: 36px; }
+#btn-enter {
+  position: relative; z-index: 5;
+  padding: 14px 52px; border-radius: 4px;
+  border: 1px solid var(--red); background: rgba(255,26,75,.07);
+  color: var(--red); font-family: 'Cinzel', serif; font-size: 13px;
+  letter-spacing: 4px; text-transform: uppercase;
+  transition: all .25s; box-shadow: 0 0 30px rgba(255,26,75,.2);
+  animation: pulse-ring 2.5s ease-out infinite;
+}
+#btn-enter:hover { background: rgba(255,26,75,.18); box-shadow: 0 0 50px rgba(255,26,75,.5); transform: translateY(-1px); }
+
+/* ═══════════════════════════════════════════════════
+   DIFFICULTY MODAL
+═══════════════════════════════════════════════════ */
+#diff-modal {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,.92); backdrop-filter: blur(12px);
+  display: flex; align-items: center; justify-content: center;
+}
+#diff-modal.hidden { display: none !important; }
+.diff-card {
+  background: linear-gradient(145deg, #0d0b1e, #070612);
+  border: 1px solid rgba(168,85,247,.25);
+  border-radius: 12px; padding: 44px; max-width: 500px; width: 92%;
+  text-align: center; box-shadow: 0 0 60px rgba(168,85,247,.15), 0 40px 80px rgba(0,0,0,.8);
+  animation: pop-in .3s ease-out;
+}
+.diff-title { font-family: 'Cinzel Decorative', serif; font-size: 28px; color: var(--purple); margin-bottom: 6px; }
+.diff-sub { font-size: 10px; color: var(--text-faint); letter-spacing: 4px; text-transform: uppercase; margin-bottom: 30px; }
+.diff-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 24px; }
+.diff-opt {
+  padding: 16px 12px; border-radius: 8px;
+  border: 1px solid var(--border2);
+  background: rgba(255,255,255,.03);
+  cursor: pointer; text-align: left; transition: all .2s;
+}
+.diff-opt:hover { border-color: rgba(168,85,247,.4); background: var(--purple-dim); }
+.diff-opt.sel { border-color: var(--purple); background: var(--purple-dim); box-shadow: 0 0 20px rgba(168,85,247,.2); }
+.diff-opt .dn { font-family: 'Cinzel', serif; font-size: 13px; font-weight: 700; margin-bottom: 5px; }
+.diff-opt .dd { font-size: 10px; color: var(--text-dim); line-height: 1.5; }
+#btn-diff-confirm {
+  width: 100%; padding: 13px; border-radius: 6px;
+  border: 1px solid var(--purple); background: var(--purple-dim);
+  color: var(--purple); font-family: 'Cinzel', serif; font-size: 13px;
+  letter-spacing: 3px; text-transform: uppercase; transition: all .2s;
+}
+#btn-diff-confirm:hover { background: rgba(168,85,247,.25); }
+
+/* ═══════════════════════════════════════════════════
+   HUD
+═══════════════════════════════════════════════════ */
+#hud {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 40;
+  display: flex; justify-content: space-between; align-items: flex-start;
+  padding: 12px 16px; gap: 12px;
+  background: linear-gradient(to bottom, rgba(0,0,0,.85), transparent);
+}
+.hud-box {
+  background: rgba(7,6,15,.9); border: 1px solid var(--border2);
+  padding: 8px 14px; border-radius: 6px; backdrop-filter: blur(12px);
+  flex-shrink: 0;
+}
+.hud-lbl { font-size: 9px; letter-spacing: 3px; color: var(--text-faint); text-transform: uppercase; margin-bottom: 5px; }
+#sanity-track { width: 150px; height: 6px; background: rgba(255,255,255,.08); border-radius: 3px; overflow: hidden; }
+#sanity-fill { height: 100%; border-radius: 3px; transition: width .35s, background .35s; background: var(--green); }
+#combo-txt { font-size: 11px; color: var(--amber); min-height: 15px; margin-top: 3px; letter-spacing: 1px; }
+#global-timer { font-family: 'Cinzel', serif; font-size: 26px; font-weight: 700; color: var(--amber); letter-spacing: 4px; }
+#score-txt { font-family: 'Cinzel', serif; font-size: 22px; font-weight: 700; color: var(--green); letter-spacing: 2px; }
+#diff-badge {
+  font-size: 9px; letter-spacing: 2px; text-transform: uppercase;
+  padding: 2px 8px; border-radius: 10px; margin-top: 4px; display: inline-block;
+}
+
+/* ═══════════════════════════════════════════════════
+   LOBBY
+═══════════════════════════════════════════════════ */
+#screen-lobby {
+  background: radial-gradient(circle at 50% 0%, rgba(100,0,20,.15), transparent 50%),
+              radial-gradient(circle at 15% 85%, rgba(50,0,90,.15), transparent 45%),
+              var(--bg);
+  z-index: 25; overflow-y: auto; justify-content: flex-start; padding: 80px 20px 40px;
+}
+.lobby-title { font-family: 'Cinzel Decorative', serif; font-size: 40px; color: var(--purple); letter-spacing: 4px; text-shadow: 0 0 30px rgba(168,85,247,.5); text-align: center; margin-bottom: 4px; }
+.lobby-sub { font-size: 10px; color: var(--text-faint); letter-spacing: 5px; text-align: center; margin-bottom: 20px; }
+#prog-wrap { max-width: 840px; width: 100%; margin: 0 auto 24px; }
+.prog-lbl { font-size: 9px; color: var(--text-faint); letter-spacing: 2px; text-align: center; margin-bottom: 6px; }
+.prog-outer { height: 3px; background: rgba(255,255,255,.06); border-radius: 2px; }
+.prog-inner { height: 100%; background: linear-gradient(90deg, var(--purple), var(--red)); border-radius: 2px; transition: width .5s ease; }
+#doors-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 14px; width: 100%; max-width: 840px; }
+
+.door-card { display: flex; flex-direction: column; align-items: center; animation: slide-up .3s ease-out both; }
+.door-face {
+  width: 90px; height: 135px;
+  border-radius: 45px 45px 4px 4px;
+  border: 2px solid rgba(255,255,255,.06);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column;
+  position: relative; overflow: hidden;
+  background: linear-gradient(180deg, #1a1828, #0c0b18);
+  transition: transform .2s, filter .2s, border-color .2s;
+}
+.door-face::before {
+  content: ''; position: absolute; inset: 0;
+  background: repeating-linear-gradient(90deg, transparent, transparent 16px, rgba(0,0,0,.5) 16px, rgba(0,0,0,.5) 18px);
+  z-index: 1;
+}
+.door-face::after {
+  content: ''; position: absolute; inset: 0;
+  box-shadow: inset 0 0 30px rgba(0,0,0,.8);
+  z-index: 2; border-radius: inherit;
+}
+.door-knob { position: absolute; right: 10px; top: 50%; width: 12px; height: 12px; border-radius: 50%; background: radial-gradient(circle at 38% 32%, #777, #1a1a1a); z-index: 3; }
+.door-num { font-family: 'Cinzel Decorative', serif; font-size: 34px; z-index: 3; position: relative; }
+.door-check { position: absolute; top: 8px; right: 8px; z-index: 3; font-size: 12px; }
+
+.door-locked .door-face { filter: grayscale(.9) brightness(.2); }
+.door-locked .door-num { color: #2a2a3a; }
+.door-unlocked .door-face { border-color: rgba(0,255,163,.3); cursor: pointer; filter: drop-shadow(0 0 14px rgba(0,255,163,.4)); }
+.door-unlocked .door-face:hover { transform: scale(1.07) translateY(-3px); filter: drop-shadow(0 0 22px rgba(0,255,163,.6)); animation: door-jiggle .4s ease-out; }
+.door-unlocked .door-num { color: var(--green); text-shadow: 0 0 12px var(--green); }
+.door-completed .door-face { border-color: rgba(168,85,247,.25); filter: brightness(.7); }
+.door-completed .door-num { color: var(--purple); text-shadow: 0 0 8px var(--purple); }
+.door-boss .door-face { border-color: rgba(255,26,75,.4) !important; filter: drop-shadow(0 0 16px rgba(255,26,75,.5)) !important; }
+.door-boss .door-num { color: var(--red) !important; text-shadow: 0 0 15px var(--red) !important; }
+.door-lbl { font-size: 9px; color: var(--text-faint); text-align: center; margin-top: 7px; max-width: 100px; line-height: 1.4; letter-spacing: .5px; }
+
+/* ═══════════════════════════════════════════════════
+   SIDE PANELS
+═══════════════════════════════════════════════════ */
+#ai-panel {
+  position: fixed; left: -340px; top: 0; bottom: 0; width: 320px;
+  background: rgba(5,4,14,.97); border-right: 1px solid var(--border2);
+  z-index: 35; padding: 70px 18px 20px; transition: left .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; backdrop-filter: blur(20px);
+}
+#ai-panel.open { left: 0; }
+#ai-toggle {
+  position: fixed; left: 0; top: 50%; transform: translateY(-50%) rotate(180deg);
+  background: rgba(7,6,15,.95); border: 1px solid var(--border2); border-left: none;
+  padding: 14px 8px; border-radius: 0 8px 8px 0; z-index: 36;
+  writing-mode: vertical-rl; text-orientation: mixed;
+  font-size: 9px; letter-spacing: 3px; color: var(--purple);
+  font-family: 'Cinzel', serif; text-transform: uppercase;
+  transition: background .2s;
+}
+#ai-toggle:hover { background: rgba(168,85,247,.08); }
+
+#lb-panel {
+  position: fixed; right: -340px; top: 0; bottom: 0; width: 320px;
+  background: rgba(5,4,14,.97); border-left: 1px solid var(--border2);
+  z-index: 35; padding: 70px 18px 20px; transition: right .35s cubic-bezier(.4,0,.2,1);
+  overflow-y: auto; backdrop-filter: blur(20px);
+}
+#lb-panel.open { right: 0; }
+#lb-toggle {
+  position: fixed; right: 0; top: 50%; transform: translateY(-50%);
+  background: rgba(7,6,15,.95); border: 1px solid var(--border2); border-right: none;
+  padding: 14px 8px; border-radius: 8px 0 0 8px; z-index: 36;
+  writing-mode: vertical-rl; font-size: 9px; letter-spacing: 3px; color: var(--amber);
+  font-family: 'Cinzel', serif; text-transform: uppercase; transition: background .2s;
+}
+#lb-toggle:hover { background: rgba(245,158,11,.08); }
+
+.panel-title { font-family: 'Cinzel', serif; font-size: 15px; color: var(--amber); margin-bottom: 20px; text-align: center; letter-spacing: 3px; }
+.panel-section { margin-bottom: 20px; }
+.panel-section-lbl { font-size: 9px; color: var(--text-faint); letter-spacing: 3px; text-transform: uppercase; margin-bottom: 8px; }
+
+.ai-btn {
+  width: 100%; padding: 8px 12px; border-radius: 5px;
+  border: 1px solid rgba(168,85,247,.3); background: var(--purple-dim);
+  color: var(--purple); font-size: 11px; letter-spacing: 1px;
+  margin-bottom: 7px; transition: all .18s;
+}
+.ai-btn:hover:not(:disabled) { background: rgba(168,85,247,.22); border-color: var(--purple); }
+.ai-btn:disabled { opacity: .3; cursor: not-allowed; }
+
+.hint-box {
+  background: rgba(168,85,247,.04); border: 1px solid rgba(168,85,247,.15);
+  border-radius: 6px; padding: 12px; font-size: 11px; color: rgba(255,255,255,.65);
+  line-height: 1.65; min-height: 56px;
+}
+.analysis-box {
+  background: rgba(0,255,163,.03); border: 1px solid rgba(0,255,163,.12);
+  border-radius: 6px; padding: 12px; font-size: 11px; color: rgba(255,255,255,.55);
+  line-height: 1.65;
+}
+.ai-loading { display: flex; gap: 5px; justify-content: center; padding: 8px; }
+.ai-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--purple); animation: blink-cursor 1s infinite; }
+.ai-dot:nth-child(2) { animation-delay: .25s; }
+.ai-dot:nth-child(3) { animation-delay: .5s; }
+.hint-cost-lbl { font-size: 9px; color: var(--text-faint); text-align: center; margin-top: 4px; }
+
+.stat-row { display: flex; justify-content: space-between; padding: 5px 0; border-bottom: 1px solid rgba(255,255,255,.04); font-size: 11px; }
+.stat-row:last-child { border-bottom: none; }
+.stat-k { color: var(--text-dim); }
+.stat-v { color: var(--green); font-weight: 600; }
+
+.lb-entry {
+  display: flex; align-items: center; gap: 10px; padding: 8px 10px;
+  border-radius: 6px; margin-bottom: 5px;
+  background: rgba(255,255,255,.02); border: 1px solid var(--border);
+  transition: background .15s;
+}
+.lb-entry:hover { background: rgba(255,255,255,.05); }
+.lb-rank { font-family: 'Cinzel', serif; font-size: 13px; color: var(--text-faint); width: 22px; text-align: center; flex-shrink: 0; }
+.lb-rank.gold { color: #ffd700; }
+.lb-rank.silver { color: #c0c0c0; }
+.lb-rank.bronze { color: #cd7f32; }
+.lb-name { flex: 1; font-size: 12px; color: #ccc; }
+.lb-score { font-size: 13px; font-weight: 700; color: var(--green); }
+.lb-meta { font-size: 9px; color: var(--text-faint); letter-spacing: 1px; }
+.lb-input {
+  width: 100%; padding: 8px 12px; background: rgba(255,255,255,.04);
+  border: 1px solid var(--border2); border-radius: 5px; color: #fff;
+  font-size: 12px; outline: none; margin-bottom: 8px; transition: border-color .2s;
+}
+.lb-input:focus { border-color: rgba(245,158,11,.4); }
+
+/* ═══════════════════════════════════════════════════
+   GAME PANEL
+═══════════════════════════════════════════════════ */
+#screen-game { z-index: 30; background: rgba(0,0,0,.55); backdrop-filter: blur(5px); }
+.game-panel {
+  background: linear-gradient(160deg, #0c0b1e, #07061a);
+  border: 1px solid rgba(168,85,247,.25);
+  border-radius: 12px; width: 100%; max-width: 700px; max-height: 90vh;
+  overflow-y: auto; position: relative;
+  box-shadow: 0 0 80px rgba(168,85,247,.12), 0 40px 80px rgba(0,0,0,.9), inset 0 1px 0 rgba(255,255,255,.05);
+  animation: pop-in .25s ease-out;
+}
+.panel-hdr {
+  padding: 20px 22px 0;
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+}
+.panel-body { padding: 16px 22px 24px; }
+.room-tag { font-size: 9px; letter-spacing: 4px; text-transform: uppercase; color: var(--text-faint); font-family: 'Cinzel', serif; }
+.room-title { font-family: 'Cinzel Decorative', serif; font-size: 22px; letter-spacing: 1px; line-height: 1.25; margin-top: 5px; }
+.type-badge {
+  font-size: 8px; padding: 3px 9px; border-radius: 10px;
+  letter-spacing: 2px; text-transform: uppercase; white-space: nowrap;
+  align-self: flex-start; margin-top: 8px;
+}
+#btn-flee { background: none; border: none; color: var(--text-faint); font-size: 10px; letter-spacing: 2px; transition: color .2s; padding: 3px 0; }
+#btn-flee:hover { color: var(--red); }
+
+.hr { height: 1px; background: rgba(255,255,255,.05); margin: 12px 0; }
+
+/* Puzzle timer bar */
+.ptimer-wrap { height: 3px; background: rgba(255,255,255,.06); border-radius: 2px; overflow: hidden; margin-bottom: 14px; }
+#ptimer-fill { height: 100%; border-radius: 2px; transition: width 1s linear, background .5s; }
+
+.room-desc { font-size: 12px; color: var(--text-dim); line-height: 1.75; margin-bottom: 14px; letter-spacing: .3px; }
+
+/* Code block */
+.code-blk {
+  background: #050412; border: 1px solid rgba(255,255,255,.06);
+  border-left: 3px solid var(--purple); border-radius: 0 6px 6px 0;
+  padding: 14px 18px; font-size: 13px; line-height: 1.85; margin-bottom: 14px;
+  overflow-x: auto; position: relative;
+}
+.kw { color: #c792ea; } .fn { color: #82aaff; } .str { color: #c3e88d; }
+.num { color: #f78c6c; } .cm { color: #445566; font-style: italic; }
+.err { color: var(--red); text-decoration: underline wavy var(--red); }
+
+/* MCQ */
+.opts-grid { display: grid; gap: 8px; margin-top: 12px; }
+.opt-btn {
+  padding: 11px 16px; border-radius: 6px;
+  border: 1px solid rgba(255,255,255,.08); background: rgba(255,255,255,.02);
+  color: rgba(255,255,255,.75); font-size: 12.5px; text-align: left;
+  display: flex; align-items: center; gap: 10px; transition: all .16s;
+}
+.opt-btn:hover:not(:disabled) { border-color: rgba(168,85,247,.45); background: var(--purple-dim); color: #fff; }
+.opt-btn.correct { border-color: var(--green) !important; background: var(--green-dim) !important; color: var(--green) !important; }
+.opt-btn.wrong { border-color: var(--red) !important; background: var(--red-dim) !important; color: var(--red) !important; animation: shake .35s; }
+.opt-letter {
+  width: 22px; height: 22px; border-radius: 4px; background: rgba(255,255,255,.06);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 700; flex-shrink: 0; letter-spacing: 0;
+}
+
+/* Fill */
+.fill-input {
+  width: 100%; padding: 13px 16px; background: rgba(5,4,18,.8);
+  border: 1px solid rgba(255,255,255,.1); border-radius: 6px;
+  color: #fff; font-size: 15px; text-align: center; outline: none;
+  letter-spacing: 2px; transition: border-color .2s, background .2s;
+}
+.fill-input:focus { border-color: rgba(168,85,247,.5); background: rgba(10,8,30,.9); }
+.fill-input.correct { border-color: var(--green); background: rgba(0,255,163,.04); }
+.fill-input.wrong { border-color: var(--red); animation: shake .3s; }
+
+/* Reorder */
+.reorder-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin: 8px 0 14px; }
+.frag-area-lbl { font-size: 9px; color: var(--text-faint); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 7px; }
+.frag-pool, .frag-target {
+  min-height: 110px; border: 1px dashed rgba(255,255,255,.09);
+  border-radius: 6px; padding: 8px; display: flex; flex-direction: column; gap: 5px;
+  background: rgba(0,0,0,.25);
+}
+.frag-target { border-color: rgba(168,85,247,.2); }
+.frag-item {
+  padding: 7px 12px; background: #0b0a1e;
+  border: 1px solid rgba(255,255,255,.07); border-radius: 5px;
+  font-size: 11.5px; cursor: pointer; transition: all .16s; color: rgba(255,255,255,.7);
+}
+.frag-item:hover { border-color: rgba(0,255,163,.35); background: rgba(0,255,163,.04); color: #fff; }
+.frag-item.placed { border-color: rgba(168,85,247,.25); background: rgba(168,85,247,.04); }
+
+/* Submit */
+.submit-btn {
+  width: 100%; padding: 11px; border-radius: 6px;
+  border: 1px solid rgba(168,85,247,.35); background: var(--purple-dim);
+  color: var(--purple); font-size: 12px; letter-spacing: 2px; text-transform: uppercase;
+  margin-top: 10px; transition: all .2s;
+}
+.submit-btn:hover { background: rgba(168,85,247,.22); border-color: var(--purple); color: #fff; }
+
+/* Panel overlays */
+.panel-overlay {
+  position: absolute; inset: 0; border-radius: 12px;
+  display: none; flex-direction: column; align-items: center; justify-content: center;
+  text-align: center; padding: 24px; z-index: 20; backdrop-filter: blur(10px);
+}
+.panel-overlay.active { display: flex; animation: pop-in .25s ease-out; }
+#lock-ov { background: rgba(50,0,8,.97); }
+#success-ov { background: rgba(0,30,15,.97); }
+.ov-title { font-family: 'Cinzel Decorative', serif; font-size: 34px; letter-spacing: 2px; margin: 14px 0 6px; }
+.ov-sub { font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: var(--text-dim); }
+
+/* ═══════════════════════════════════════════════════
+   JUMP SCARE
+═══════════════════════════════════════════════════ */
+#jump-scare {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,.97); display: none;
+  flex-direction: column; align-items: center; justify-content: center;
+  pointer-events: none;
+}
+#jump-scare.active { display: flex; }
+#jump-scare-body { filter: drop-shadow(0 0 60px #ff0000); animation: shake .25s infinite; }
+.scare-text {
+  font-family: 'Cinzel Decorative', serif; font-size: 52px; color: #cc0000;
+  margin-top: 20px; animation: blink-cursor .2s infinite;
+  text-shadow: 0 0 30px rgba(255,0,0,.8);
+}
+
+/* ═══════════════════════════════════════════════════
+   ACHIEVEMENT & FLOATING XP
+═══════════════════════════════════════════════════ */
+.ach-toast {
+  position: fixed; top: 76px; left: 50%; transform: translateX(-50%);
+  background: rgba(7,6,15,.97); border: 1px solid var(--amber);
+  border-radius: 8px; padding: 12px 20px; display: flex; align-items: center;
+  gap: 12px; z-index: 400; min-width: 270px;
+  box-shadow: 0 0 30px rgba(245,158,11,.25); animation: slide-up .3s ease-out;
+}
+.ach-icon { font-size: 22px; }
+.ach-name { font-family: 'Cinzel', serif; font-size: 12px; color: var(--amber); letter-spacing: 1px; }
+.ach-desc { font-size: 10px; color: var(--text-dim); margin-top: 2px; }
+.xp-float {
+  position: fixed; font-family: 'Cinzel', serif; font-size: 17px; font-weight: 700;
+  pointer-events: none; z-index: 500; animation: xp-float 1.2s ease-out forwards;
+  text-shadow: 0 2px 8px rgba(0,0,0,.9);
+}
+
+/* ═══════════════════════════════════════════════════
+   END SCREENS
+═══════════════════════════════════════════════════ */
+.end-screen { background: #000; z-index: 45; }
+.end-title { font-family: 'Cinzel Decorative', serif; font-size: clamp(44px,8vw,72px); line-height: 1; margin-bottom: 8px; }
+.end-sub { font-size: 12px; color: var(--text-dim); letter-spacing: 3px; margin-bottom: 40px; }
+.end-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin-bottom: 40px; max-width: 460px; }
+.stat-card { background: rgba(255,255,255,.04); border: 1px solid var(--border2); border-radius: 8px; padding: 16px; text-align: center; }
+.stat-val { font-family: 'Cinzel', serif; font-size: 28px; font-weight: 700; color: var(--green); }
+.stat-key { font-size: 9px; color: var(--text-faint); letter-spacing: 2px; margin-top: 4px; text-transform: uppercase; }
+.restart-btn {
+  padding: 14px 44px; border-radius: 6px; font-family: 'Cinzel', serif;
+  font-size: 13px; letter-spacing: 4px; text-transform: uppercase; transition: all .2s;
+}
+
+/* ═══════════════════════════════════════════════════
+   UTILITY
+═══════════════════════════════════════════════════ */
+.divider { height: 1px; background: rgba(255,255,255,.05); margin: 12px 0; }
+</style>
+</head>
+<body>
+<script>
+// ── SECURITY: Disable right-click & devtools ──
+document.addEventListener('contextmenu', e => e.preventDefault());
+document.addEventListener('keydown', e => {
+  if (e.key === 'F12' || 
+      (e.ctrlKey && e.shiftKey && ['I','J','C','U'].includes(e.key.toUpperCase())) ||
+      (e.ctrlKey && e.key.toUpperCase() === 'U')) {
+    e.preventDefault(); return false;
+  }
+});
+(function devToolsDetect() {
+  const threshold = 160;
+  setInterval(() => {
+    if (window.outerWidth - window.innerWidth > threshold || window.outerHeight - window.innerHeight > threshold) {
+      document.body.innerHTML = '<div style="display:flex;align-items:center;justify-content:center;height:100vh;background:#000005;color:#ff1a1a;font-family:Orbitron,monospace;font-size:18px;letter-spacing:.2em;text-align:center;">⛔ ACCESS DENIED<br><span style=\"font-size:12px;color:#555;margin-top:12px;display:block;\">CLOSE DEVELOPER TOOLS TO CONTINUE</span></div>';
+    }
+  }, 1000);
+})();
+</script>
+
+
+<!-- Atmosphere -->
+<div id="fog-layer"></div>
+<div id="vignette"></div>
+<div id="crt-overlay"></div>
+<div id="lightning-el"></div>
+
+<!-- ════ DIFFICULTY MODAL ════ -->
+<div id="diff-modal">
+  <div class="diff-card">
+    <div class="diff-title">Choose Your Fate</div>
+    <div class="diff-sub">Select Difficulty</div>
+    <div class="diff-grid">
+      <div class="diff-opt sel" data-d="apprentice">
+        <div class="dn" style="color:#00ffa3">Apprentice</div>
+        <div class="dd">60s per puzzle · Free hints · Slow sanity drain</div>
+      </div>
+      <div class="diff-opt" data-d="haunted">
+        <div class="dn" style="color:#f59e0b">Haunted</div>
+        <div class="dd">40s · Hints cost 50pts · Standard drain</div>
+      </div>
+      <div class="diff-opt" data-d="nightmare">
+        <div class="dn" style="color:#ff4466">Nightmare</div>
+        <div class="dd">25s · Hints cost 150 · Fast drain</div>
+      </div>
+      <div class="diff-opt" data-d="insane">
+        <div class="dn" style="color:#a855f7">Insane</div>
+        <div class="dd">15s · No regen · AI-generated bonus rooms</div>
+      </div>
+    </div>
+    <button id="btn-diff-confirm">Enter the Mansion →</button>
+  </div>
+</div>
+
+<!-- ════ START SCREEN ════ -->
+<div id="screen-start" class="screen">
+  <div id="mansion-wrap">
+    <svg id="mansion-svg" viewBox="0 0 900 580" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="moonG" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#fff9e8"/>
+          <stop offset="45%" stop-color="#ffd060"/>
+          <stop offset="100%" stop-color="#aa6600" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="wallG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#1c1b2b"/>
+          <stop offset="100%" stop-color="#0c0b18"/>
+        </linearGradient>
+        <linearGradient id="roofG" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#141320"/>
+          <stop offset="100%" stop-color="#06050f"/>
+        </linearGradient>
+        <linearGradient id="stoneG" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#1a1926"/>
+          <stop offset="50%" stop-color="#22213a"/>
+          <stop offset="100%" stop-color="#111020"/>
+        </linearGradient>
+        <linearGradient id="metalL" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#3a3a4a"/>
+          <stop offset="50%" stop-color="#6a6a7a"/>
+          <stop offset="100%" stop-color="#2a2a38"/>
+        </linearGradient>
+        <linearGradient id="metalR" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#2a2a38"/>
+          <stop offset="50%" stop-color="#5a5a6a"/>
+          <stop offset="100%" stop-color="#3a3a4a"/>
+        </linearGradient>
+        <pattern id="brick" x="0" y="0" width="30" height="20" patternUnits="userSpaceOnUse">
+          <rect width="30" height="20" fill="none"/>
+          <rect x="1" y="1" width="28" height="8" rx="1" fill="rgba(255,255,255,0.025)"/>
+          <rect x="1" y="11" width="12" height="8" rx="1" fill="rgba(255,255,255,0.02)"/>
+          <rect x="15" y="11" width="14" height="8" rx="1" fill="rgba(255,255,255,0.03)"/>
+        </pattern>
+        <filter id="glowF">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+        </filter>
+      </defs>
+      <!-- Moon glow halo -->
+      <circle cx="450" cy="95" r="160" fill="url(#moonG)" opacity=".5"/>
+      <!-- Moon -->
+      <circle cx="450" cy="95" r="72" fill="#fff5d5" style="animation:moon-pulse 4s ease-in-out infinite alternate"/>
+      <circle cx="425" cy="78" r="9" fill="rgba(180,150,80,.35)"/>
+      <circle cx="468" cy="108" r="6" fill="rgba(180,150,80,.25)"/>
+      <circle cx="452" cy="68" r="4" fill="rgba(180,150,80,.2)"/>
+      <!-- Trees -->
+      <g opacity=".3" fill="#080710">
+        <rect x="55" y="330" width="7" height="170"/><path d="M59 330 Q42 308 28 285 Q52 300 59 325 Q66 305 54 278 Q72 298 59 323"/>
+        <rect x="838" y="350" width="6" height="150"/><path d="M841 350 Q825 328 812 305 Q834 320 841 345 Q848 325 836 298 Q855 318 841 342"/>
+      </g>
+      <!-- Ground -->
+      <rect x="0" y="490" width="900" height="90" fill="#020108"/>
+      <rect x="0" y="490" width="900" height="90" fill="url(#brick)" opacity=".5"/>
+      <!-- Back towers -->
+      <rect x="148" y="115" width="95" height="380" fill="#1a1928"/>
+      <rect x="148" y="115" width="95" height="380" fill="url(#brick)" opacity=".6"/>
+      <rect x="145" y="95" width="19" height="28" rx="2" fill="#0d0c1a"/>
+      <rect x="167" y="95" width="19" height="28" rx="2" fill="#0d0c1a"/>
+      <rect x="189" y="95" width="19" height="28" rx="2" fill="#0d0c1a"/>
+      <rect x="211" y="95" width="19" height="28" rx="2" fill="#0d0c1a"/>
+      <rect x="233" y="95" width="17" height="28" rx="2" fill="#0d0c1a"/>
+      <polygon points="195,8 148,113 243,113" fill="url(#roofG)"/>
+      <rect x="652" y="115" width="95" height="380" fill="#1a1928"/>
+      <rect x="652" y="115" width="95" height="380" fill="url(#brick)" opacity=".6"/>
+      <rect x="650" y="95" width="19" height="28" rx="2" fill="#0d0c1a"/>
+      <rect x="672" y="95" width="19" height="28" rx="2" fill="#0d0c1a"/>
+      <rect x="694" y="95" width="19" height="28" rx="2" fill="#0d0c1a"/>
+      <rect x="716" y="95" width="19" height="28" rx="2" fill="#0d0c1a"/>
+      <rect x="737" y="95" width="15" height="28" rx="2" fill="#0d0c1a"/>
+      <polygon points="700,8 652,113 748,113" fill="url(#roofG)"/>
+      <!-- Front towers -->
+      <rect x="210" y="192" width="78" height="310" fill="#1a1928"/>
+      <rect x="210" y="192" width="78" height="310" fill="url(#brick)" opacity=".5"/>
+      <polygon points="249,108 210,190 288,190" fill="url(#roofG)"/>
+      <rect x="608" y="192" width="78" height="310" fill="#1a1928"/>
+      <rect x="608" y="192" width="78" height="310" fill="url(#brick)" opacity=".5"/>
+      <polygon points="647,108 608,190 686,190" fill="url(#roofG)"/>
+      <!-- Main body -->
+      <rect x="295" y="238" width="310" height="264" fill="url(#wallG)"/>
+      <rect x="295" y="238" width="310" height="264" fill="url(#brick)" opacity=".5"/>
+      <polygon points="272,242 450,108 628,242" fill="url(#roofG)"/>
+      <!-- Windows glow -->
+      <rect x="228" y="224" width="38" height="58" rx="19" fill="#180900"/>
+      <rect id="w1" x="230" y="226" width="34" height="54" rx="17" fill="#ff7700" opacity=".75" filter="url(#glowF)"/>
+      <line x1="247" y1="226" x2="247" y2="280" stroke="#070612" stroke-width="5"/>
+      <line x1="230" y1="252" x2="264" y2="252" stroke="#070612" stroke-width="4"/>
+      <rect x="630" y="224" width="38" height="58" rx="19" fill="#180900"/>
+      <rect id="w2" x="632" y="226" width="34" height="54" rx="17" fill="#ff7700" opacity=".75" filter="url(#glowF)"/>
+      <line x1="649" y1="226" x2="649" y2="280" stroke="#070612" stroke-width="5"/>
+      <line x1="632" y1="252" x2="666" y2="252" stroke="#070612" stroke-width="4"/>
+      <!-- Rose window -->
+      <circle cx="450" cy="188" r="36" fill="#180900"/>
+      <circle id="w3" cx="450" cy="188" r="32" fill="#ff7700" opacity=".7" filter="url(#glowF)"/>
+      <line x1="418" y1="188" x2="482" y2="188" stroke="#050410" stroke-width="5"/>
+      <line x1="450" y1="156" x2="450" y2="220" stroke="#050410" stroke-width="5"/>
+      <line x1="427" y1="165" x2="473" y2="211" stroke="#050410" stroke-width="4"/>
+      <line x1="473" y1="165" x2="427" y2="211" stroke="#050410" stroke-width="4"/>
+      <!-- Stone walls -->
+      <rect x="0" y="402" width="320" height="96" fill="url(#stoneG)"/>
+      <rect x="0" y="402" width="320" height="96" fill="url(#brick)" opacity=".7"/>
+      <rect x="578" y="402" width="322" height="96" fill="url(#stoneG)"/>
+      <rect x="578" y="402" width="322" height="96" fill="url(#brick)" opacity=".7"/>
+      <!-- Archway -->
+      <path d="M318,500 L318,362 Q318,278 450,278 Q582,278 582,362 L582,500 Z" fill="#0f0e1e"/>
+      <path d="M332,500 L332,364 Q332,294 450,294 Q568,294 568,364 L568,500 Z" fill="#06050f"/>
+      <!-- Gate posts -->
+      <rect x="298" y="330" width="30" height="172" fill="url(#stoneG)"/>
+      <rect x="293" y="322" width="40" height="12" rx="2" fill="#1c1a30"/>
+      <circle cx="313" cy="314" r="11" fill="#151424"/>
+      <circle cx="309" cy="311" r="3" fill="#000"/><circle cx="317" cy="311" r="3" fill="#000"/>
+      <rect x="568" y="330" width="30" height="172" fill="url(#stoneG)"/>
+      <rect x="563" y="322" width="40" height="12" rx="2" fill="#1c1a30"/>
+      <circle cx="583" cy="314" r="11" fill="#151424"/>
+      <circle cx="579" cy="311" r="3" fill="#000"/><circle cx="587" cy="311" r="3" fill="#000"/>
+      <!-- Gate panels -->
+      <g id="gate-l" style="transform-origin:328px 500px">
+        <rect x="328" y="295" width="90" height="205" fill="none" stroke="url(#metalL)" stroke-width="5" rx="2"/>
+        <rect x="328" y="322" width="90" height="6" fill="url(#metalL)"/>
+        <rect x="328" y="392" width="90" height="6" fill="url(#metalL)"/>
+        <rect x="328" y="462" width="90" height="6" fill="url(#metalL)"/>
+        <rect x="345" y="295" width="6" height="205" fill="url(#metalL)" rx="1"/>
+        <rect x="364" y="295" width="6" height="205" fill="url(#metalL)" rx="1"/>
+        <rect x="383" y="295" width="6" height="205" fill="url(#metalL)" rx="1"/>
+        <rect x="402" y="295" width="6" height="205" fill="url(#metalL)" rx="1"/>
+        <polygon points="345,295 348,276 351,295" fill="#999"/>
+        <polygon points="364,295 367,271 370,295" fill="#999"/>
+        <polygon points="383,295 386,276 389,295" fill="#999"/>
+        <polygon points="402,295 405,271 408,295" fill="#999"/>
+      </g>
+      <g id="gate-r" style="transform-origin:568px 500px">
+        <rect x="480" y="295" width="90" height="205" fill="none" stroke="url(#metalR)" stroke-width="5" rx="2"/>
+        <rect x="480" y="322" width="90" height="6" fill="url(#metalR)"/>
+        <rect x="480" y="392" width="90" height="6" fill="url(#metalR)"/>
+        <rect x="480" y="462" width="90" height="6" fill="url(#metalR)"/>
+        <rect x="488" y="295" width="6" height="205" fill="url(#metalR)" rx="1"/>
+        <rect x="507" y="295" width="6" height="205" fill="url(#metalR)" rx="1"/>
+        <rect x="526" y="295" width="6" height="205" fill="url(#metalR)" rx="1"/>
+        <rect x="545" y="295" width="6" height="205" fill="url(#metalR)" rx="1"/>
+        <polygon points="488,295 491,276 494,295" fill="#999"/>
+        <polygon points="507,295 510,271 513,295" fill="#999"/>
+        <polygon points="526,295 529,276 532,295" fill="#999"/>
+        <polygon points="545,295 548,271 551,295" fill="#999"/>
+      </g>
+      <!-- Torches -->
+      <rect x="74" y="420" width="7" height="20" rx="2" fill="#4a3018"/>
+      <ellipse cx="78" cy="418" rx="6" ry="9" fill="#ff8800" opacity=".9" style="animation:flicker-candle .35s ease-in-out infinite alternate; filter:drop-shadow(0 0 8px #ff4400)"/>
+      <rect x="816" y="420" width="7" height="20" rx="2" fill="#4a3018"/>
+      <ellipse cx="820" cy="418" rx="6" ry="9" fill="#ff8800" opacity=".9" style="animation:flicker-candle .28s ease-in-out infinite alternate; filter:drop-shadow(0 0 8px #ff4400)"/>
+    </svg>
+  </div>
+  <!-- Flying bats -->
+  <div class="bat" style="--bat-y:7vh;top:7vh;animation-duration:11s;animation-delay:0s">
+    <svg width="70" height="38" viewBox="0 0 100 55" fill="#0a0818"><path d="M50 22 Q53 16 56 22 C62 11 82 5 100 12 C86 22 90 36 90 36 C76 26 71 42 71 42 C61 31 56 47 50 47 C44 47 39 31 29 42 C29 42 24 26 10 36 C10 36 14 22 0 12 C18 5 38 11 44 22 Q47 16 50 22Z"/></svg>
+  </div>
+  <div class="bat" style="--bat-y:18vh;top:18vh;animation-duration:8s;animation-delay:-3s;transform:scale(.65)">
+    <svg width="70" height="38" viewBox="0 0 100 55" fill="#0a0818"><path d="M50 22 Q53 16 56 22 C62 11 82 5 100 12 C86 22 90 36 90 36 C76 26 71 42 71 42 C61 31 56 47 50 47 C44 47 39 31 29 42 C29 42 24 26 10 36 C10 36 14 22 0 12 C18 5 38 11 44 22 Q47 16 50 22Z"/></svg>
+  </div>
+
+  <h1 class="start-title">Haunted Code<br>Mansion</h1>
+  <div class="start-sub">AI Edition — Professional</div>
+  <button id="btn-enter">Enter the Gate</button>
+</div>
+
+<!-- ════ HUD ════ -->
+<div id="hud" class="hidden">
+  <div class="hud-box">
+    <div class="hud-lbl">Sanity</div>
+    <div id="sanity-track"><div id="sanity-fill" style="width:100%"></div></div>
+    <div id="combo-txt"></div>
+  </div>
+  <div class="hud-box" style="text-align:center">
+    <div class="hud-lbl" id="timer-lbl-hud">Global Time</div>
+    <div id="global-timer">20:00</div>
+    <div id="level-txt" style="font-size:11px;color:var(--text-dim);margin-top:2px"></div>
+  </div>
+  <div class="hud-box" style="text-align:right">
+    <div class="hud-lbl">Score</div>
+    <div id="score-txt">0</div>
+    <div id="diff-badge"></div>
+  </div>
+</div>
+
+<!-- ════ AI PANEL ════ -->
+<div id="ai-panel">
+  <div class="panel-title">⬡ AI Oracle</div>
+  <div class="panel-section">
+    <div class="panel-section-lbl">Hint System</div>
+    <div class="hint-box" id="hint-box"><span style="color:var(--text-faint)">Enter a room to awaken the Oracle...</span></div>
+    <div class="hint-cost-lbl" id="hint-cost-lbl"></div>
+    <button class="ai-btn" id="btn-hint" disabled>Get Hint (AI)</button>
+    <button class="ai-btn" id="btn-explain" disabled>Explain Concept (AI)</button>
+  </div>
+  <div class="panel-section">
+    <div class="panel-section-lbl">AI Analysis</div>
+    <div class="analysis-box" id="analysis-box"><span style="color:var(--text-faint)">Performance analysis appears after 3 rooms...</span></div>
+  </div>
+  <div class="panel-section">
+    <div class="panel-section-lbl">Session Stats</div>
+    <div class="stat-row"><span class="stat-k">Accuracy</span><span class="stat-v" id="st-acc">—</span></div>
+    <div class="stat-row"><span class="stat-k">Avg Speed</span><span class="stat-v" id="st-spd">—</span></div>
+    <div class="stat-row"><span class="stat-k">Hints Used</span><span class="stat-v" id="st-hints">0</span></div>
+    <div class="stat-row"><span class="stat-k">Jump Scares</span><span class="stat-v" id="st-scares">0</span></div>
+    <div class="stat-row"><span class="stat-k">Best Combo</span><span class="stat-v" id="st-combo">1</span></div>
+    <div class="stat-row"><span class="stat-k">Difficulty</span><span class="stat-v" id="st-diff">—</span></div>
+  </div>
+</div>
+<button id="ai-toggle">AI Oracle</button>
+
+<!-- ════ LEADERBOARD ════ -->
+<div id="lb-panel">
+  <div class="panel-title">Hall of Survivors</div>
+  <div id="lb-list"></div>
+  <div style="margin-top:20px;padding-top:16px;border-top:1px solid rgba(255,255,255,.05)">
+    <div class="panel-section-lbl">Save Score</div>
+    <input class="lb-input" id="lb-name-inp" type="text" maxlength="24" placeholder="Your name...">
+    <button class="ai-btn" id="btn-save-score">Save Score</button>
+  </div>
+</div>
+<button id="lb-toggle">Leaderboard</button>
+
+<!-- ════ LOBBY ════ -->
+<div id="screen-lobby" class="screen hidden">
+  <div class="lobby-title">The Great Hall</div>
+  <div class="lobby-sub">Choose Your Room</div>
+  <div id="prog-wrap">
+    <div class="prog-lbl" id="prog-lbl">Progress — 0/15</div>
+    <div class="prog-outer"><div class="prog-inner" id="prog-inner" style="width:0%"></div></div>
+  </div>
+  <div id="doors-grid"></div>
+  <!-- Lobby ghost -->
+  <div style="position:fixed;left:32px;bottom:28px;opacity:.22;pointer-events:none;animation:ghost-float 5s ease-in-out infinite,ghost-wander 7s ease-in-out infinite">
+    <svg width="55" height="75" viewBox="0 0 100 130">
+      <defs><radialGradient id="gg" cx="50%" cy="35%" r="60%"><stop offset="0%" stop-color="rgba(200,210,255,0.9)"/><stop offset="100%" stop-color="rgba(100,120,255,0.05)"/></radialGradient></defs>
+      <path d="M10,60 Q10,10 50,10 Q90,10 90,60 L90,105 Q80,92 70,105 Q60,92 50,105 Q40,92 30,105 Q20,92 10,105 Z" fill="url(#gg)"/>
+      <circle cx="36" cy="46" r="7" fill="rgba(0,0,0,0.7)"/>
+      <circle cx="64" cy="46" r="7" fill="rgba(0,0,0,0.7)"/>
+    </svg>
+  </div>
+</div>
+
+<!-- ════ GAME PANEL ════ -->
+<div id="screen-game" class="screen hidden">
+  <div class="game-panel">
+    <div class="panel-hdr">
+      <div style="flex:1">
+        <div class="room-tag" id="room-tag">ROOM 1</div>
+        <div class="room-title" id="room-title">Loading...</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:5px">
+        <button id="btn-flee">FLEE TO LOBBY</button>
+        <span class="type-badge" id="type-badge"></span>
+      </div>
+    </div>
+    <div class="panel-body">
+      <div class="ptimer-wrap"><div id="ptimer-fill" style="width:100%;background:var(--green)"></div></div>
+      <div id="game-content"></div>
+      <!-- Lock overlay -->
+      <div class="panel-overlay" id="lock-ov">
+        <svg width="80" height="108" viewBox="0 0 100 130" style="animation:ghost-float 3s ease-in-out infinite">
+          <defs><radialGradient id="lgr" cx="50%" cy="35%" r="60%"><stop offset="0%" stop-color="rgba(255,80,80,0.95)"/><stop offset="100%" stop-color="rgba(120,0,0,0.1)"/></radialGradient></defs>
+          <path d="M10,60 Q10,10 50,10 Q90,10 90,60 L90,105 Q80,92 70,105 Q60,92 50,105 Q40,92 30,105 Q20,92 10,105 Z" fill="url(#lgr)" style="filter:drop-shadow(0 0 18px rgba(255,40,40,0.8))"/>
+          <ellipse cx="36" cy="46" rx="10" ry="12" fill="#000"/>
+          <ellipse cx="64" cy="46" rx="10" ry="12" fill="#000"/>
+          <path d="M32 72 Q50 90 68 72" fill="none" stroke="#000" stroke-width="4"/>
+        </svg>
+        <div class="ov-title" style="color:var(--red)">You Are Locked!</div>
+        <div class="ov-sub">Solve this puzzle to claim your key...</div>
+      </div>
+      <!-- Success overlay -->
+      <div class="panel-overlay" id="success-ov">
+        <svg width="80" height="108" viewBox="0 0 100 130" style="animation:ghost-float 3s ease-in-out infinite">
+          <defs><radialGradient id="sgr" cx="50%" cy="35%" r="60%"><stop offset="0%" stop-color="rgba(80,255,160,0.95)"/><stop offset="100%" stop-color="rgba(0,100,50,0.05)"/></radialGradient></defs>
+          <path d="M10,60 Q10,10 50,10 Q90,10 90,60 L90,105 Q80,92 70,105 Q60,92 50,105 Q40,92 30,105 Q20,92 10,105 Z" fill="url(#sgr)" style="filter:drop-shadow(0 0 18px rgba(0,255,130,0.7))"/>
+          <path d="M28 44 Q36 36 44 44" stroke="#000" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <path d="M56 44 Q64 36 72 44" stroke="#000" stroke-width="4" fill="none" stroke-linecap="round"/>
+          <path d="M34 70 Q50 84 66 70" stroke="#000" stroke-width="4" fill="none" stroke-linecap="round"/>
+        </svg>
+        <div class="ov-title" style="color:var(--green)">Correct!</div>
+        <div class="ov-sub" id="success-msg">+500 XP Gained</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════ JUMP SCARE ════ -->
+<div id="jump-scare">
+  <div style="position:absolute;inset:0;background:radial-gradient(circle at 50% 42%,rgba(160,0,0,0.6),transparent 55%)"></div>
+  <svg id="jump-scare-body" viewBox="0 0 220 230" width="58vmin" height="58vmin" style="position:relative;z-index:1">
+    <ellipse cx="110" cy="112" rx="92" ry="95" fill="#060408"/>
+    <ellipse cx="75" cy="94" rx="28" ry="32" fill="#cc0000" opacity=".9"/>
+    <ellipse cx="145" cy="94" rx="28" ry="32" fill="#cc0000" opacity=".9"/>
+    <ellipse cx="75" cy="94" rx="14" ry="17" fill="#ff4400" opacity=".8"/>
+    <ellipse cx="145" cy="94" rx="14" ry="17" fill="#ff4400" opacity=".8"/>
+    <circle cx="75" cy="94" r="7" fill="#000"/>
+    <circle cx="145" cy="94" r="7" fill="#000"/>
+    <circle cx="78" cy="92" r="2" fill="#fff" opacity=".5"/>
+    <circle cx="148" cy="92" r="2" fill="#fff" opacity=".5"/>
+    <polygon points="110,118 103,138 117,138" fill="rgba(160,0,0,0.8)"/>
+    <path d="M52 162 Q110 192 168 162 Q110 148 52 162" fill="#aa0000"/>
+    <path d="M60,164 L66,180 L74,165 L82,183 L90,166 L98,185 L106,167 L114,188 L122,167 L130,185 L138,166 L146,183 L154,165 L162,180 L168,164Z" fill="#ddd"/>
+  </svg>
+  <div class="scare-text">FATAL ERROR</div>
+</div>
+
+<!-- ════ GAME OVER ════ -->
+<div id="screen-go" class="screen hidden end-screen">
+  <div class="end-title" style="color:var(--red)">Mind Shattered</div>
+  <div class="end-sub">The cursed code consumed your sanity</div>
+  <div class="end-stats">
+    <div class="stat-card"><div class="stat-val" id="go-score">0</div><div class="stat-key">Final Score</div></div>
+    <div class="stat-card"><div class="stat-val" id="go-rooms">0</div><div class="stat-key">Rooms Cleared</div></div>
+    <div class="stat-card"><div class="stat-val" id="go-acc">—</div><div class="stat-key">Accuracy</div></div>
+  </div>
+  <button class="restart-btn" style="border:1px solid var(--red);background:var(--red-dim);color:var(--red)" onclick="location.reload()">Resurrect</button>
+</div>
+
+<!-- ════ VICTORY ════ -->
+<div id="screen-win" class="screen hidden end-screen">
+  <div class="end-title" style="color:var(--green)">Escaped!</div>
+  <div class="end-sub">You survived the Haunted Code Mansion</div>
+  <div class="end-stats">
+    <div class="stat-card"><div class="stat-val" id="win-score">0</div><div class="stat-key">Final Score</div></div>
+    <div class="stat-card"><div class="stat-val" id="win-rooms">0</div><div class="stat-key">Rooms Cleared</div></div>
+    <div class="stat-card"><div class="stat-val" id="win-acc">—</div><div class="stat-key">Accuracy</div></div>
+  </div>
+  <button class="restart-btn" style="border:1px solid var(--green);background:var(--green-dim);color:var(--green)" onclick="location.reload()">Play Again</button>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════════
+   GAME STATE
+═══════════════════════════════════════════════════ */
+const GS = {
+  sanity: 100, score: 0, combo: 1, maxCombo: 1,
+  unlockedLevel: 1, maxLevels: 15,
+  globalTime: 1200, timerActive: false, inPuzzle: false,
+  difficulty: 'haunted',
+  totalAttempts: 0, correctAttempts: 0,
+  hintsUsed: 0, jumpScares: 0,
+  puzzleTimes: [], currentPuzzleStart: 0,
+  achievements: [], currentLevel: 0, currentPuzzle: null
+};
+
+const DIFF = {
+  apprentice: { time: 60,  hintFree: true,  hintCost: 0,   sanityDrain: 3,  noRegen: false, label: 'Apprentice', color: '#00ffa3' },
+  haunted:    { time: 40,  hintFree: false, hintCost: 50,  sanityDrain: 8,  noRegen: false, label: 'Haunted',    color: '#f59e0b' },
+  nightmare:  { time: 25,  hintFree: false, hintCost: 150, sanityDrain: 15, noRegen: false, label: 'Nightmare',  color: '#ff4466' },
+  insane:     { time: 15,  hintFree: false, hintCost: 300, sanityDrain: 25, noRegen: true,  label: 'Insane',     color: '#a855f7' },
+};
+
+/* ═══════════════════════════════════════════════════
+   AUDIO ENGINE — PROFESSIONAL WEB AUDIO API
+═══════════════════════════════════════════════════ */
+let AC = null;
+const REVERB_BUF = {};
+
+function initAudio() {
+  if (AC) return;
+  AC = new (window.AudioContext || window.webkitAudioContext)();
+  buildReverb().then(() => {
+    startAmbience();
+  });
+}
+
+async function buildReverb() {
+  if (!AC) return;
+  const len = AC.sampleRate * 3.5;
+  const buf = AC.createBuffer(2, len, AC.sampleRate);
+  for (let c = 0; c < 2; c++) {
+    const d = buf.getChannelData(c);
+    for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.5);
+  }
+  REVERB_BUF.buf = buf;
+}
+
+function makeReverb(wet = 0.4) {
+  if (!AC || !REVERB_BUF.buf) return null;
+  const conv = AC.createConvolver();
+  conv.buffer = REVERB_BUF.buf;
+  const wet_g = AC.createGain();
+  const dry_g = AC.createGain();
+  wet_g.gain.value = wet;
+  dry_g.gain.value = 1 - wet * 0.5;
+  return { conv, wet_g, dry_g };
+}
+
+function startAmbience() {
+  if (!AC) return;
+  const t = AC.currentTime;
+
+  // Deep drone pair (slight detuning = beating = eeriness)
+  const makeOsc = (freq, type, gain) => {
+    const o = AC.createOscillator();
+    const g = AC.createGain();
+    const f = AC.createBiquadFilter();
+    o.type = type; o.frequency.value = freq;
+    f.type = 'lowpass'; f.frequency.value = 220;
+    g.gain.value = gain;
+    o.connect(f); f.connect(g); g.connect(AC.destination);
+    o.start(); return o;
+  };
+  makeOsc(41.2, 'sawtooth', 0.22);
+  makeOsc(41.6, 'sawtooth', 0.18);
+  makeOsc(82.4, 'triangle', 0.10);
+
+  // Wind layer
+  const windBuf = AC.createBuffer(1, AC.sampleRate * 4, AC.sampleRate);
+  const wd = windBuf.getChannelData(0);
+  for (let i = 0; i < wd.length; i++) wd[i] = Math.random() * 2 - 1;
+  const wind = AC.createBufferSource();
+  wind.buffer = windBuf; wind.loop = true;
+  const wf1 = AC.createBiquadFilter(); wf1.type = 'bandpass'; wf1.frequency.value = 380; wf1.Q.value = 5;
+  const wf2 = AC.createBiquadFilter(); wf2.type = 'lowpass'; wf2.frequency.value = 600;
+  const wg = AC.createGain(); wg.gain.value = 0.10;
+  wind.connect(wf1); wf1.connect(wf2); wf2.connect(wg); wg.connect(AC.destination);
+  wind.start();
+
+  // Low rumble heartbeat
+  schedHeartbeat();
+  // Bell sequence
+  schedBell();
+}
+
+function schedHeartbeat() {
+  if (!AC) return;
+  const hb = () => {
+    const t = AC.currentTime;
+    const o = AC.createOscillator();
+    const g = AC.createGain();
+    const f = AC.createBiquadFilter();
+    o.type = 'sine'; o.frequency.setValueAtTime(48, t);
+    o.frequency.exponentialRampToValueAtTime(28, t + 0.25);
+    f.type = 'lowpass'; f.frequency.value = 80;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.7, t + 0.05);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+    o.connect(f); f.connect(g); g.connect(AC.destination);
+    o.start(t); o.stop(t + 0.35);
+
+    const o2 = AC.createOscillator();
+    const g2 = AC.createGain();
+    o2.type = 'sine'; o2.frequency.setValueAtTime(44, t + 0.35);
+    o2.frequency.exponentialRampToValueAtTime(26, t + 0.6);
+    g2.gain.setValueAtTime(0, t + 0.35);
+    g2.gain.linearRampToValueAtTime(0.5, t + 0.38);
+    g2.gain.exponentialRampToValueAtTime(0.001, t + 0.65);
+    o2.connect(f); f.connect(g2); g2.connect(AC.destination);
+    o2.start(t + 0.35); o2.stop(t + 0.7);
+    setTimeout(hb, 5000 + Math.random() * 7000);
+  };
+  setTimeout(hb, 3000);
+}
+
+function schedBell() {
+  if (!AC) return;
+  const bong = () => {
+    const t = AC.currentTime;
+    const freqs = [110, 220.5, 330.2];
+    freqs.forEach((freq, i) => {
+      const o = AC.createOscillator();
+      const g = AC.createGain();
+      const p = AC.createPanner();
+      o.type = i === 0 ? 'sine' : 'triangle';
+      o.frequency.value = freq;
+      o.detune.value = (Math.random() - 0.5) * 12;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.3 / (i + 1), t + 0.04);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 6 - i);
+      p.panningModel = 'HRTF';
+      p.setPosition(Math.random() * 4 - 2, 0, -1);
+      o.connect(g); g.connect(p); p.connect(AC.destination);
+      o.start(t); o.stop(t + 6);
+    });
+    setTimeout(bong, 8000 + Math.random() * 9000);
+  };
+  setTimeout(bong, 2000);
+}
+
+function playSound(type) {
+  if (!AC) return;
+  const t = AC.currentTime;
+  const dst = AC.destination;
+
+  const osc = (freq, type_='sine', dur=0.5) => {
+    const o = AC.createOscillator();
+    const g = AC.createGain();
+    o.type = type_; o.frequency.value = freq;
+    o.connect(g); g.connect(dst);
+    return { o, g, t: AC.currentTime, dur };
+  };
+
+  if (type === 'success') {
+    // Triumphant arpeggio with harmonics
+    const notes = [330, 415, 523, 659, 784];
+    notes.forEach((freq, i) => {
+      const o = AC.createOscillator();
+      const g = AC.createGain();
+      const st = t + i * 0.09;
+      o.type = 'sine'; o.frequency.value = freq;
+      g.gain.setValueAtTime(0, st);
+      g.gain.linearRampToValueAtTime(0.35, st + 0.03);
+      g.gain.exponentialRampToValueAtTime(0.001, st + 0.55);
+      o.connect(g); g.connect(dst); o.start(st); o.stop(st + 0.6);
+      // Harmonic
+      const o2 = AC.createOscillator();
+      const g2 = AC.createGain();
+      o2.type = 'triangle'; o2.frequency.value = freq * 2;
+      g2.gain.setValueAtTime(0, st);
+      g2.gain.linearRampToValueAtTime(0.1, st + 0.03);
+      g2.gain.exponentialRampToValueAtTime(0.001, st + 0.4);
+      o2.connect(g2); g2.connect(dst); o2.start(st); o2.stop(st + 0.45);
+    });
+  }
+
+  if (type === 'wrong') {
+    // Dissonant buzzer
+    [150, 158, 200].forEach((freq, i) => {
+      const o = AC.createOscillator();
+      const g = AC.createGain();
+      const f = AC.createBiquadFilter();
+      o.type = 'sawtooth'; o.frequency.value = freq;
+      f.type = 'lowpass'; f.frequency.value = 600;
+      g.gain.setValueAtTime(0.4, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
+      o.connect(f); f.connect(g); g.connect(dst);
+      o.start(t); o.stop(t + 0.45);
+    });
+  }
+
+  if (type === 'scare') {
+    // Brutal stinger: freq sweep + noise burst + sub thud
+    const o1 = AC.createOscillator();
+    const g1 = AC.createGain();
+    o1.type = 'sawtooth';
+    o1.frequency.setValueAtTime(80, t);
+    o1.frequency.exponentialRampToValueAtTime(1200, t + 0.08);
+    o1.frequency.exponentialRampToValueAtTime(60, t + 0.5);
+    g1.gain.setValueAtTime(0, t);
+    g1.gain.linearRampToValueAtTime(1.0, t + 0.03);
+    g1.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+    o1.connect(g1); g1.connect(dst); o1.start(t); o1.stop(t + 0.6);
+
+    // Sub thud
+    const o2 = AC.createOscillator();
+    const g2 = AC.createGain();
+    o2.type = 'sine';
+    o2.frequency.setValueAtTime(90, t);
+    o2.frequency.exponentialRampToValueAtTime(30, t + 0.3);
+    g2.gain.setValueAtTime(0, t);
+    g2.gain.linearRampToValueAtTime(0.8, t + 0.02);
+    g2.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+    o2.connect(g2); g2.connect(dst); o2.start(t); o2.stop(t + 0.4);
+
+    // Noise burst
+    const nBuf = AC.createBuffer(1, AC.sampleRate * 0.3, AC.sampleRate);
+    const nd = nBuf.getChannelData(0);
+    for (let i = 0; i < nd.length; i++) nd[i] = (Math.random() * 2 - 1);
+    const ns = AC.createBufferSource(); ns.buffer = nBuf;
+    const nf = AC.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = 2000; nf.Q.value = 0.8;
+    const ng = AC.createGain();
+    ng.gain.setValueAtTime(0.6, t); ng.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+    ns.connect(nf); nf.connect(ng); ng.connect(dst); ns.start(t);
+  }
+
+  if (type === 'creak') {
+    // Door creak: modulated low oscillator
+    const o = AC.createOscillator();
+    const g = AC.createGain();
+    const f = AC.createBiquadFilter();
+    o.type = 'sawtooth';
+    o.frequency.setValueAtTime(55, t);
+    o.frequency.linearRampToValueAtTime(38, t + 1.2);
+    o.frequency.linearRampToValueAtTime(48, t + 2.2);
+    o.frequency.linearRampToValueAtTime(30, t + 3.0);
+    f.type = 'bandpass'; f.frequency.value = 280; f.Q.value = 8;
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.75, t + 0.2);
+    g.gain.setValueAtTime(0.75, t + 2.8);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 3.2);
+    o.connect(f); f.connect(g); g.connect(dst);
+    o.start(t); o.stop(t + 3.3);
+  }
+
+  if (type === 'moan') {
+    // Ghost moan: sine with vibrato
+    const o = AC.createOscillator();
+    const lfo = AC.createOscillator();
+    const lfoG = AC.createGain();
+    const g = AC.createGain();
+    o.type = 'sine'; o.frequency.value = 165;
+    lfo.type = 'sine'; lfo.frequency.value = 4.5;
+    lfoG.gain.value = 18;
+    lfo.connect(lfoG); lfoG.connect(o.frequency);
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.55, t + 0.8);
+    g.gain.exponentialRampToValueAtTime(0.2, t + 2.5);
+    g.gain.linearRampToValueAtTime(0, t + 3.5);
+    o.connect(g); g.connect(dst); lfo.start(t); o.start(t);
+    o.frequency.exponentialRampToValueAtTime(95, t + 3.5);
+    o.stop(t + 3.6); lfo.stop(t + 3.6);
+  }
+
+  if (type === 'thunder') {
+    // Thunder rumble
+    const nBuf = AC.createBuffer(1, AC.sampleRate * 2.5, AC.sampleRate);
+    const nd = nBuf.getChannelData(0);
+    for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+    const ns = AC.createBufferSource(); ns.buffer = nBuf;
+    const f1 = AC.createBiquadFilter(); f1.type = 'lowpass'; f1.frequency.value = 100;
+    const f2 = AC.createBiquadFilter(); f2.type = 'highpass'; f2.frequency.value = 25;
+    const g = AC.createGain();
+    g.gain.setValueAtTime(0, t);
+    g.gain.linearRampToValueAtTime(0.9, t + 0.08);
+    g.gain.exponentialRampToValueAtTime(0.3, t + 0.8);
+    g.gain.exponentialRampToValueAtTime(0.001, t + 2.4);
+    ns.connect(f1); f1.connect(f2); f2.connect(g); g.connect(dst); ns.start(t);
+  }
+
+  if (type === 'hover') {
+    const o = AC.createOscillator();
+    const g = AC.createGain();
+    o.type = 'sine'; o.frequency.setValueAtTime(660, t);
+    o.frequency.exponentialRampToValueAtTime(880, t + 0.08);
+    g.gain.setValueAtTime(0.12, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.12);
+    o.connect(g); g.connect(dst); o.start(t); o.stop(t + 0.15);
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   RAIN
+═══════════════════════════════════════════════════ */
+(function makeRain() {
+  for (let i = 0; i < 55; i++) {
+    const d = document.createElement('div');
+    d.className = 'rain-drop';
+    d.style.left = Math.random() * 100 + 'vw';
+    d.style.height = (45 + Math.random() * 90) + 'px';
+    d.style.animationDuration = (0.45 + Math.random() * 0.75) + 's';
+    d.style.animationDelay = (-Math.random() * 2.5) + 's';
+    document.body.appendChild(d);
+  }
+})();
+
+/* ═══════════════════════════════════════════════════
+   LIGHTNING
+═══════════════════════════════════════════════════ */
+function scheduleLightning() {
+  const fire = () => {
+    const el = document.getElementById('lightning-el');
+    el.style.opacity = '0.85';
+    setTimeout(() => { el.style.opacity = '0.2'; }, 90);
+    setTimeout(() => { el.style.opacity = '0.7'; }, 140);
+    setTimeout(() => { el.style.opacity = '0'; }, 220);
+    playSound('thunder');
+    setTimeout(fire, 5000 + Math.random() * 7000);
+  };
+  setTimeout(fire, 3000 + Math.random() * 4000);
+}
+
+/* ═══════════════════════════════════════════════════
+   BAT SWARM
+═══════════════════════════════════════════════════ */
+function batSwarm(n = 30, cx = window.innerWidth / 2, cy = window.innerHeight / 2) {
+  for (let i = 0; i < n; i++) {
+    const b = document.createElement('div');
+    b.className = 'swarm-bat';
+    b.style.left = cx + 'px';
+    b.style.top = cy + 'px';
+    const angle = Math.random() * Math.PI * 2;
+    const dist = 60 + Math.random() * 80;
+    b.style.setProperty('--tx', `calc(-50% + ${Math.cos(angle) * dist}vw)`);
+    b.style.setProperty('--ty', `calc(-50% + ${Math.sin(angle) * dist}vh)`);
+    const dur = 1.2 + Math.random() * 0.7;
+    b.style.animationDuration = dur + 's';
+    b.style.animationDelay = (Math.random() * 0.18) + 's';
+    b.innerHTML = `<svg width="65" height="33" viewBox="0 0 100 55" fill="#060412"><path d="M50 22 Q53 16 56 22 C62 11 82 5 100 12 C86 22 90 36 90 36 C76 26 71 42 71 42 C61 31 56 47 50 47 C44 47 39 31 29 42 C29 42 24 26 10 36 C10 36 14 22 0 12 C18 5 38 11 44 22 Q47 16 50 22Z"/></svg>`;
+    document.body.appendChild(b);
+    setTimeout(() => b.remove(), (dur + 0.3) * 1000);
+  }
+}
+
+/* ═══════════════════════════════════════════════════
+   JUMP SCARE
+═══════════════════════════════════════════════════ */
+function jumpScare() {
+  GS.jumpScares++;
+  document.getElementById('st-scares').textContent = GS.jumpScares;
+  playSound('scare');
+  const el = document.getElementById('jump-scare');
+  el.style.display = 'flex';
+  document.body.style.animation = 'shake 0.4s';
+  updateSanity(-DIFF[GS.difficulty].sanityDrain);
+  updateCombo(false);
+  setTimeout(() => {
+    el.style.display = 'none';
+    document.body.style.animation = '';
+  }, 750);
+}
+
+/* ═══════════════════════════════════════════════════
+   UI HELPERS
+═══════════════════════════════════════════════════ */
+function updateSanity(delta) {
+  GS.sanity = Math.min(100, Math.max(0, GS.sanity + delta));
+  const bar = document.getElementById('sanity-fill');
+  bar.style.width = GS.sanity + '%';
+  bar.style.background = GS.sanity > 60 ? 'var(--green)' : GS.sanity > 30 ? 'var(--amber)' : 'var(--red)';
+  if (GS.sanity <= 0) setTimeout(() => endGame(false), 600);
+}
+
+function addScore(pts, x, y) {
+  GS.score = Math.max(0, GS.score + pts);
+  document.getElementById('score-txt').textContent = GS.score.toLocaleString();
+  if (x != null) {
+    const el = document.createElement('div');
+    el.className = 'xp-float';
+    el.textContent = (pts > 0 ? '+' : '') + pts;
+    el.style.left = x + 'px';
+    el.style.top = (y - 20) + 'px';
+    el.style.color = pts > 0 ? 'var(--green)' : 'var(--red)';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 1300);
+  }
+}
+
+function updateCombo(correct) {
+  if (correct) {
+    GS.combo = Math.min(GS.combo + 1, 12);
+    GS.maxCombo = Math.max(GS.maxCombo, GS.combo);
+    document.getElementById('st-combo').textContent = GS.maxCombo + 'x';
+  } else {
+    GS.combo = 1;
+  }
+  const el = document.getElementById('combo-txt');
+  el.textContent = GS.combo > 1 ? `COMBO ×${GS.combo} 🔥` : '';
+}
+
+function updateStats() {
+  const acc = GS.totalAttempts ? Math.round((GS.correctAttempts / GS.totalAttempts) * 100) : 0;
+  document.getElementById('st-acc').textContent = acc + '%';
+  const avg = GS.puzzleTimes.length ? Math.round(GS.puzzleTimes.reduce((a, b) => a + b, 0) / GS.puzzleTimes.length) : 0;
+  document.getElementById('st-spd').textContent = avg ? avg + 's' : '—';
+  document.getElementById('st-hints').textContent = GS.hintsUsed;
+}
+
+/* ═══════════════════════════════════════════════════
+   LEADERBOARD
+═══════════════════════════════════════════════════ */
+function getLB() { try { return JSON.parse(localStorage.getItem('hcm_v2_lb') || '[]'); } catch { return []; } }
+function saveLB(e) { localStorage.setItem('hcm_v2_lb', JSON.stringify(e.slice(0, 20))); }
+
+function renderLB() {
+  const entries = getLB().sort((a, b) => b.score - a.score).slice(0, 15);
+  const rankMark = ['👑', '🥈', '🥉'];
+  document.getElementById('lb-list').innerHTML = entries.length ? entries.map((e, i) => `
+    <div class="lb-entry">
+      <div class="lb-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${rankMark[i] || (i+1)}</div>
+      <div style="flex:1">
+        <div class="lb-name">${e.name}</div>
+        <div class="lb-meta">${(e.diff||'').toUpperCase()} · LVL ${e.level}</div>
+      </div>
+      <div class="lb-score">${(e.score||0).toLocaleString()}</div>
+    </div>`).join('') : '<div style="color:var(--text-faint);font-size:11px;text-align:center;padding:20px 0">No survivors yet...</div>';
+}
+
+document.getElementById('btn-save-score').onclick = () => {
+  const name = document.getElementById('lb-name-inp').value.trim() || 'Anonymous';
+  localStorage.setItem('hcm_player', name);
+  const entries = getLB();
+  entries.unshift({ name, score: GS.score, level: GS.unlockedLevel - 1, diff: GS.difficulty, date: new Date().toLocaleDateString() });
+  saveLB(entries); renderLB();
+  document.getElementById('lb-name-inp').value = '';
+  const btn = document.getElementById('btn-save-score');
+  btn.textContent = '✓ Saved!';
+  setTimeout(() => btn.textContent = 'Save Score', 2500);
+};
+
+/* ═══════════════════════════════════════════════════
+   PANELS
+═══════════════════════════════════════════════════ */
+document.getElementById('ai-toggle').onclick = () => document.getElementById('ai-panel').classList.toggle('open');
+document.getElementById('lb-toggle').onclick = () => { document.getElementById('lb-panel').classList.toggle('open'); renderLB(); };
+
+/* ═══════════════════════════════════════════════════
+   DIFFICULTY MODAL
+═══════════════════════════════════════════════════ */
+document.querySelectorAll('.diff-opt').forEach(el => {
+  el.onclick = () => {
+    document.querySelectorAll('.diff-opt').forEach(o => o.classList.remove('sel'));
+    el.classList.add('sel');
+    GS.difficulty = el.dataset.d;
+  };
+});
+document.getElementById('btn-diff-confirm').onclick = () => {
+  document.getElementById('diff-modal').classList.add('hidden');
+  const d = DIFF[GS.difficulty];
+  const badge = document.getElementById('diff-badge');
+  badge.textContent = d.label.toUpperCase();
+  badge.style.background = d.color + '22';
+  badge.style.color = d.color;
+  badge.style.border = `1px solid ${d.color}44`;
+  document.getElementById('st-diff').textContent = d.label;
+};
+
+/* ═══════════════════════════════════════════════════
+   GLOBAL TIMER
+═══════════════════════════════════════════════════ */
+let gTimerInt;
+function startGlobalTimer() {
+  if (GS.timerActive) return;
+  GS.timerActive = true;
+  gTimerInt = setInterval(() => {
+    if (!GS.inPuzzle) return;
+    GS.globalTime--;
+    const m = Math.floor(GS.globalTime / 60).toString().padStart(2, '0');
+    const s = (GS.globalTime % 60).toString().padStart(2, '0');
+    document.getElementById('global-timer').textContent = `${m}:${s}`;
+    const el = document.getElementById('global-timer');
+    if (GS.globalTime <= 60) el.style.color = 'var(--red)';
+    else el.style.color = 'var(--amber)';
+    if (GS.globalTime <= 0) { clearInterval(gTimerInt); endGame(false); }
+  }, 1000);
+}
+
+/* ═══════════════════════════════════════════════════
+   PUZZLE TIMER
+═══════════════════════════════════════════════════ */
+let pTimerInt, pSecs = 0;
+function startPuzzleTimer(secs, onExpire) {
+  clearInterval(pTimerInt);
+  pSecs = secs;
+  const bar = document.getElementById('ptimer-fill');
+  bar.style.width = '100%';
+  bar.style.background = 'var(--green)';
+  pTimerInt = setInterval(() => {
+    pSecs--;
+    const pct = Math.max(0, (pSecs / secs)) * 100;
+    bar.style.width = pct + '%';
+    bar.style.background = pct > 60 ? 'var(--green)' : pct > 30 ? 'var(--amber)' : 'var(--red)';
+    if (pSecs <= 0) { clearInterval(pTimerInt); onExpire?.(); }
+  }, 1000);
+}
+function stopPuzzleTimer() { clearInterval(pTimerInt); }
+
+/* ═══════════════════════════════════════════════════
+   ENTER GATE
+═══════════════════════════════════════════════════ */
+let audioBooted = false;
+document.addEventListener('click', () => { if (!audioBooted) { audioBooted = true; initAudio(); } }, { once: true });
+
+document.getElementById('btn-enter').onclick = () => {
+  if (!audioBooted) { audioBooted = true; initAudio(); }
+  playSound('creak');
+  setTimeout(() => playSound('moan'), 400);
+
+  const gL = document.getElementById('gate-l');
+  const gR = document.getElementById('gate-r');
+  gL.style.animation = 'gate-open-l 3s forwards cubic-bezier(.4,0,.2,1)';
+  gR.style.animation = 'gate-open-r 3s forwards cubic-bezier(.4,0,.2,1)';
+
+  setTimeout(() => batSwarm(55, window.innerWidth / 2, window.innerHeight * 0.65), 450);
+  setTimeout(() => document.getElementById('mansion-svg').style.animation = 'zoom-rush 2.4s forwards ease-in', 1900);
+
+  setTimeout(() => {
+    document.getElementById('screen-start').classList.add('hidden');
+    document.getElementById('hud').classList.remove('hidden');
+    document.getElementById('screen-lobby').classList.remove('hidden');
+    renderLobby();
+    startGlobalTimer();
+    scheduleLightning();
+    renderLB();
+  }, 3900);
+};
+
+document.getElementById('btn-flee').onclick = () => {
+  stopPuzzleTimer();
+  GS.inPuzzle = false;
+  document.getElementById('screen-game').classList.add('hidden');
+  document.getElementById('screen-lobby').classList.remove('hidden');
+  document.getElementById('btn-hint').disabled = true;
+  document.getElementById('btn-explain').disabled = true;
+};
+
+/* ═══════════════════════════════════════════════════
+   LOBBY RENDER
+═══════════════════════════════════════════════════ */
+const ROOM_META = [
+  { label: 'Reorder',  color: '#a855f7' },
+  { label: 'Debug',    color: '#ff4466' },
+  { label: 'Logic',    color: '#3b82f6' },
+  { label: 'Speed',    color: '#f59e0b' },
+  { label: 'Fill-in',  color: '#00ffa3' },
+  { label: 'AI Boss',  color: '#ff1a4b' },
+];
+
+function getRoomMeta(i) {
+  if (i % 5 === 0) return ROOM_META[5];
+  return ROOM_META[(i - 1) % 5];
+}
+
+function renderLobby() {
+  const grid = document.getElementById('doors-grid');
+  grid.innerHTML = '';
+  const pct = ((GS.unlockedLevel - 1) / GS.maxLevels) * 100;
+  document.getElementById('prog-inner').style.width = pct + '%';
+  document.getElementById('prog-lbl').textContent = `Progress — ${GS.unlockedLevel - 1}/${GS.maxLevels} rooms cleared`;
+  document.getElementById('level-txt').textContent = `Level ${GS.unlockedLevel} / ${GS.maxLevels}`;
+
+  for (let i = 1; i <= GS.maxLevels; i++) {
+    const meta = getRoomMeta(i);
+    const isBoss = i % 5 === 0;
+    const isUnlocked = i === GS.unlockedLevel;
+    const isCompleted = i < GS.unlockedLevel;
+    const isLocked = i > GS.unlockedLevel;
+
+    let stateClass = isLocked ? 'door-locked' : (isCompleted ? 'door-completed' : (isBoss ? 'door-boss door-unlocked' : 'door-unlocked'));
+
+    const card = document.createElement('div');
+    card.className = 'door-card';
+    card.style.animationDelay = (i * 0.04) + 's';
+    card.innerHTML = `
+      <div class="door-face ${stateClass}" ${isUnlocked || isBoss && isUnlocked ? `onclick="handleDoorClick(${i},event)"` : ''}>
+        <div class="door-knob"></div>
+        <div class="door-num">${isBoss ? '💀' : i}</div>
+        ${isCompleted ? '<div class="door-check">✓</div>' : ''}
+      </div>
+      <div class="door-lbl" style="color:${!isLocked ? meta.color : 'var(--text-faint)'}">
+        ${isBoss ? 'BOSS ROOM' : meta.label}<br>
+        <span style="color:var(--text-faint);font-size:9px">Room ${i}</span>
+      </div>`;
+    grid.appendChild(card);
+  }
+}
+
+function handleDoorClick(i, evt) {
+  playSound('hover');
+  const rect = evt.currentTarget.getBoundingClientRect();
+  batSwarm(28, rect.left + rect.width / 2, rect.top + rect.height / 2);
+  playSound('creak');
+  setTimeout(() => playSound('moan'), 300);
+  setTimeout(() => loadLevel(i), 700);
+}
+window.handleDoorClick = handleDoorClick;
+
+/* ═══════════════════════════════════════════════════
+   PUZZLE LIBRARY
+═══════════════════════════════════════════════════ */
+const PUZZLES = [
+  {
+    title: 'The Shattered Incantation', type: 'reorder', tag: 'ROOM 1', typeLabel: 'Reorder', typeColor: '#a855f7',
+    desc: 'The spirit shattered this function into fragments. Reassemble the cursed code in the correct order.',
+    frags: [{id:'f1',code:'function brew() {'},{id:'f2',code:'  let potion = "healing";'},{id:'f3',code:'  return potion;'},{id:'f4',code:'}'}],
+    answer: 'f1,f2,f3,f4'
+  },
+  {
+    title: 'The Infinite Curse', type: 'mcq', tag: 'ROOM 2', typeLabel: 'Debug', typeColor: '#ff4466',
+    desc: 'A demon caused this loop to run forever. Select the line that fixes the infinite loop.',
+    code: `<span class="kw">function</span> <span class="fn">banishSpirits</span>() {\n  <span class="kw">let</span> ghosts = <span class="num">5</span>;\n  <span class="kw">while</span> (ghosts > <span class="num">0</span>) {\n    console.<span class="fn">log</span>(<span class="str">"Banish!"</span>);\n    <span class="err">ghosts + 1;</span>  <span class="cm">// ← haunted line</span>\n  }\n}`,
+    options: ['ghosts = 0;', 'ghosts--;', 'ghosts += 1;'],
+    answer: 1
+  },
+  {
+    title: 'The Gates of Truth', type: 'mcq', tag: 'ROOM 3', typeLabel: 'Logic', typeColor: '#3b82f6',
+    desc: 'Only the correct truth value will open this cursed gate. What does this evaluate to?',
+    code: `<span class="kw">const</span> isSafe =\n  (<span class="kw">true</span> && !<span class="kw">false</span>) || (<span class="kw">false</span> && <span class="kw">true</span>);`,
+    options: ['true', 'false', 'undefined'],
+    answer: 0
+  },
+  {
+    title: 'The Typeof Tomb', type: 'fill', tag: 'ROOM 4', typeLabel: 'Fill-in', typeColor: '#00ffa3',
+    desc: 'Ancient lore says arrays hide their true nature. What does typeof return for an array?',
+    code: `<span class="kw">typeof</span> []`,
+    answer: '"object"',
+    hint: 'Arrays in JS are secretly objects — typeof returns the primitive type string in quotes.'
+  },
+  {
+    title: 'The Architect\'s Loop', type: 'fill', tag: 'ROOM 5 — BOSS', typeLabel: 'Boss', typeColor: '#ff1a4b',
+    desc: 'Trace every iteration of this cursed loop. What is the final value returned?',
+    code: `<span class="kw">let</span> souls = <span class="num">1</span>;\n<span class="kw">for</span> (<span class="kw">let</span> i = <span class="num">0</span>; i < <span class="num">3</span>; i++) {\n  souls = (souls * <span class="num">2</span>) + <span class="num">1</span>;\n}\n<span class="kw">return</span> souls;`,
+    answer: '15',
+    hint: 'Trace: start=1 → iter1=(1×2)+1=3 → iter2=(3×2)+1=7 → iter3=(7×2)+1=15'
+  },
+  {
+    title: 'The Closure Crypt', type: 'mcq', tag: 'ROOM 6', typeLabel: 'Logic', typeColor: '#3b82f6',
+    desc: 'This ghost holds state across calls. What does the third invocation return?',
+    code: `<span class="kw">function</span> <span class="fn">ghost</span>() {\n  <span class="kw">let</span> x = <span class="num">0</span>;\n  <span class="kw">return</span> <span class="kw">function</span>() {\n    x++; <span class="kw">return</span> x;\n  };\n}\n<span class="kw">const</span> haunt = <span class="fn">ghost</span>();\n<span class="fn">haunt</span>(); <span class="fn">haunt</span>();\n<span class="kw">return</span> <span class="fn">haunt</span>();`,
+    options: ['1', '2', '3'],
+    answer: 2
+  },
+  {
+    title: 'Array of Souls', type: 'fill', tag: 'ROOM 7', typeLabel: 'Fill-in', typeColor: '#00ffa3',
+    desc: 'The reduce ritual summons all values into one. What is the final result?',
+    code: `[<span class="num">1</span>, <span class="num">2</span>, <span class="num">3</span>].<span class="fn">reduce</span>((acc, b) => acc + b, <span class="num">0</span>)`,
+    answer: '6',
+    hint: 'reduce starts at 0, then accumulates: 0+1+2+3 = 6'
+  },
+  {
+    title: 'The Null Dungeon', type: 'mcq', tag: 'ROOM 8', typeLabel: 'Debug', typeColor: '#ff4466',
+    desc: 'JavaScript\'s most famous quirk lurks here. What does this cursed comparison return?',
+    code: `<span class="kw">null</span> == <span class="kw">undefined</span>`,
+    options: ['true', 'false', 'TypeError'],
+    answer: 0
+  },
+  {
+    title: 'The Promise Ritual', type: 'reorder', tag: 'ROOM 9', typeLabel: 'Reorder', typeColor: '#a855f7',
+    desc: 'The async spell was scattered by a poltergeist. Restore the correct order.',
+    frags: [
+      {id:'p1',code:'async function fetchSoul(url) {'},
+      {id:'p2',code:'  const res = await fetch(url);'},
+      {id:'p3',code:'  const data = await res.json();'},
+      {id:'p4',code:'  return data;'},
+      {id:'p5',code:'}'}
+    ],
+    answer: 'p1,p2,p3,p4,p5'
+  },
+  {
+    title: 'The Fibonacci Specter', type: 'fill', tag: 'ROOM 10 — BOSS', typeLabel: 'Boss', typeColor: '#ff1a4b',
+    desc: 'This recursive demon calls itself endlessly. What does it return for n = 4?',
+    code: `<span class="kw">function</span> <span class="fn">specter</span>(n) {\n  <span class="kw">if</span> (n <= <span class="num">1</span>) <span class="kw">return</span> n;\n  <span class="kw">return</span> <span class="fn">specter</span>(n-<span class="num">1</span>) + <span class="fn">specter</span>(n-<span class="num">2</span>);\n}\n<span class="fn">specter</span>(<span class="num">4</span>)`,
+    answer: '3',
+    hint: 'This is Fibonacci. specter(4) = specter(3)+specter(2) = 2+1 = 3'
+  },
+  {
+    title: 'Scope of the Shadows', type: 'mcq', tag: 'ROOM 11', typeLabel: 'Logic', typeColor: '#3b82f6',
+    desc: 'Block scope casts a shadow. What does this code log?',
+    code: `<span class="kw">let</span> x = <span class="num">10</span>;\n{\n  <span class="kw">let</span> x = <span class="num">20</span>;\n}\nconsole.<span class="fn">log</span>(x);`,
+    options: ['10', '20', 'ReferenceError'],
+    answer: 0
+  },
+  {
+    title: 'The Prototype Phantom', type: 'fill', tag: 'ROOM 12', typeLabel: 'Fill-in', typeColor: '#00ffa3',
+    desc: 'JavaScript\'s most infamous bug. What string does typeof null return?',
+    code: `<span class="kw">typeof</span> <span class="kw">null</span>`,
+    answer: '"object"',
+    hint: 'typeof null is a famous JS bug from 1995 — it should say "null" but returns another type'
+  },
+  {
+    title: 'Class of the Damned', type: 'reorder', tag: 'ROOM 13', typeLabel: 'Reorder', typeColor: '#a855f7',
+    desc: 'The class definition was disassembled by dark magic. Put it back together.',
+    frags: [
+      {id:'c1',code:'class Demon {'},
+      {id:'c2',code:'  constructor(name) {'},
+      {id:'c3',code:'    this.name = name;'},
+      {id:'c4',code:'  }'},
+      {id:'c5',code:'}'}
+    ],
+    answer: 'c1,c2,c3,c4,c5'
+  },
+  {
+    title: 'The Spread Specter', type: 'mcq', tag: 'ROOM 14', typeLabel: 'Logic', typeColor: '#3b82f6',
+    desc: 'The spread operator merges two arrays. What is the resulting length?',
+    code: `<span class="kw">const</span> a = [<span class="num">1</span>, <span class="num">2</span>];\n<span class="kw">const</span> b = [<span class="num">3</span>, <span class="num">4</span>];\n<span class="kw">const</span> c = [...a, ...b];\nconsole.<span class="fn">log</span>(c.length);`,
+    options: ['2', '4', 'undefined'],
+    answer: 1
+  },
+  {
+    title: 'The Final Ritual', type: 'fill', tag: 'ROOM 15 — FINAL BOSS', typeLabel: 'Final Boss', typeColor: '#ff1a4b',
+    desc: 'The ultimate cursed chain. Trace every step — filter → map → reduce. What is logged?',
+    code: `<span class="kw">const</span> data = [<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">4</span>,<span class="num">5</span>];\n<span class="kw">const</span> result = data\n  .<span class="fn">filter</span>(x => x % <span class="num">2</span> !== <span class="num">0</span>)\n  .<span class="fn">map</span>(x => x * <span class="num">3</span>)\n  .<span class="fn">reduce</span>((a, b) => a + b, <span class="num">0</span>);\nconsole.<span class="fn">log</span>(result);`,
+    answer: '27',
+    hint: 'filter→[1,3,5], map→[3,9,15], reduce→3+9+15=27'
+  }
+];
+
+/* ═══════════════════════════════════════════════════
+   FALLBACK AI-GENERATED PUZZLES
+═══════════════════════════════════════════════════ */
+function aiGenerateFallback(i) {
+  const pool = [
+    () => {
+      const a = Math.floor(Math.random()*6)+2, b = Math.floor(Math.random()*6)+2;
+      const ans = (a*b).toString();
+      const opts = [ans, String(a*b+1), String(a+b)].sort(() => Math.random()-.5);
+      return { title:`Room ${i}: The Multiplied Curse`, type:'mcq', tag:`ROOM ${i}`, typeLabel:'Logic', typeColor:'#3b82f6',
+        desc:'What value does this haunted expression return?',
+        code:`<span class="kw">const</span> x = <span class="num">${a}</span> * <span class="num">${b}</span>;\n<span class="kw">return</span> x;`,
+        options: opts, answer: opts.indexOf(ans) };
+    },
+    () => ({ title:`Room ${i}: The Boolean Tomb`, type:'fill', tag:`ROOM ${i}`, typeLabel:'Fill-in', typeColor:'#00ffa3',
+      desc:'What does Boolean(0) evaluate to?',
+      code:`<span class="fn">Boolean</span>(<span class="num">0</span>)`, answer:'false', hint:'0 is a falsy value in JavaScript' }),
+    () => ({ title:`Room ${i}: String Specter`, type:'fill', tag:`ROOM ${i}`, typeLabel:'Fill-in', typeColor:'#00ffa3',
+      desc:'How many characters in this haunted string?',
+      code:`<span class="str">"phantom"</span>.length`, answer:'7', hint:'Count the letters: p-h-a-n-t-o-m' }),
+    () => {
+      const opts = ['[object Object]', 'undefined', 'TypeError'];
+      return { title:`Room ${i}: Object Apparition`, type:'mcq', tag:`ROOM ${i}`, typeLabel:'Logic', typeColor:'#3b82f6',
+        desc:'What does this expression produce?',
+        code:`<span class="str">""</span> + {}`, options: opts, answer: 0 };
+    },
+  ];
+  return pool[(i-1) % pool.length]();
+}
+
+/* ═══════════════════════════════════════════════════
+   LOAD & RENDER LEVEL
+═══════════════════════════════════════════════════ */
+function loadLevel(i) {
+  GS.currentLevel = i;
+  document.getElementById('screen-lobby').classList.add('hidden');
+  document.getElementById('screen-game').classList.remove('hidden');
+
+  // Show lock overlay first
+  const lockOv = document.getElementById('lock-ov');
+  const succOv = document.getElementById('success-ov');
+  lockOv.classList.add('active');
+  succOv.classList.remove('active');
+  GS.inPuzzle = false;
+
+  setTimeout(async () => {
+    lockOv.classList.remove('active');
+    // For levels beyond static set, try AI generation
+    let puzzle = PUZZLES[i-1];
+    if (!puzzle) puzzle = await tryAIGenerate(i);
+    if (!puzzle) puzzle = aiGenerateFallback(i);
+    GS.currentPuzzle = puzzle;
+    GS.inPuzzle = true;
+    GS.currentPuzzleStart = Date.now();
+    renderPuzzle(puzzle);
+    document.getElementById('btn-hint').disabled = false;
+    document.getElementById('btn-explain').disabled = false;
+  }, 3200);
+}
+
+async function tryAIGenerate(i) {
+  const topics = ['closures','prototype chain','event loop','promises','destructuring','Map and Set','generators','Symbol','WeakRef','Proxy objects'];
+  const topic = topics[(i-1) % topics.length];
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{
+          role: 'user',
+          content: `You are generating a puzzle for a horror-themed JavaScript coding game called "Haunted Code Mansion".
+
+Topic: "${topic}". Room number: ${i}.
+
+Respond ONLY with valid JSON (no markdown, no explanation, no code fences):
+{
+  "title": "Spooky room name related to the topic",
+  "type": "mcq",
+  "tag": "ROOM ${i}",
+  "typeLabel": "Logic",
+  "typeColor": "#3b82f6",
+  "desc": "1 sentence description (spooky tone)",
+  "code": "JavaScript code as plain text (no HTML tags)",
+  "options": ["option A", "option B", "option C"],
+  "answer": 0,
+  "hint": "1 sentence hint without giving the answer"
+}
+
+Rules:
+- answer is the index (0, 1, or 2) of the correct option
+- code must be valid, runnable JavaScript
+- make it genuinely educational and correct
+- keep the horror theme in the title/desc`
+        }]
+      })
+    });
+    const data = await resp.json();
+    const raw = data.content?.map(b => b.text || '').join('') || '';
+    const clean = raw.replace(/```json?|```/g, '').trim();
+    const parsed = JSON.parse(clean);
+    if (parsed.code) parsed.code = parsed.code.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+    return parsed;
+  } catch { return null; }
+}
+
+function renderPuzzle(p) {
+  document.getElementById('room-tag').textContent = p.tag || `ROOM ${GS.currentLevel}`;
+  document.getElementById('room-title').textContent = p.title;
+  const badge = document.getElementById('type-badge');
+  badge.textContent = p.typeLabel || 'Puzzle';
+  badge.style.background = (p.typeColor || '#888') + '22';
+  badge.style.color = p.typeColor || '#888';
+  badge.style.border = `1px solid ${p.typeColor || '#888'}44`;
+
+  const d = DIFF[GS.difficulty];
+  startPuzzleTimer(d.time, () => {
+    jumpScare();
+    stopPuzzleTimer();
+  });
+
+  const c = document.getElementById('game-content');
+  c.innerHTML = '';
+
+  if (p.type === 'mcq') renderMCQ(c, p);
+  else if (p.type === 'reorder') renderReorder(c, p);
+  else if (p.type === 'fill') renderFill(c, p);
+
+  updateHintCostUI();
+}
+
+function renderMCQ(c, p) {
+  c.innerHTML = `<div class="room-desc">${p.desc}</div>
+    <div class="code-blk">${p.code}</div>
+    <div class="opts-grid" id="opts"></div>`;
+  const letters = ['A', 'B', 'C', 'D'];
+  const grid = document.getElementById('opts');
+  p.options.forEach((opt, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'opt-btn';
+    btn.innerHTML = `<span class="opt-letter">${letters[i]}</span>${opt}`;
+    btn.onclick = () => {
+      stopPuzzleTimer();
+      GS.totalAttempts++;
+      grid.querySelectorAll('.opt-btn').forEach(b => b.disabled = true);
+      if (i === p.answer) {
+        btn.classList.add('correct');
+        GS.correctAttempts++;
+        playSound('success');
+        setTimeout(() => onCorrect(), 300);
+      } else {
+        btn.classList.add('wrong');
+        grid.querySelectorAll('.opt-btn')[p.answer]?.classList.add('correct');
+        jumpScare();
+        updateStats();
+      }
+    };
+    grid.appendChild(btn);
+  });
+}
+
+function renderReorder(c, p) {
+  const shuffled = [...p.frags].sort(() => Math.random() - 0.5);
+  c.innerHTML = `<div class="room-desc">${p.desc}</div>
+    <div class="reorder-grid">
+      <div>
+        <div class="frag-area-lbl">Fragments</div>
+        <div class="frag-pool" id="fpool"></div>
+      </div>
+      <div>
+        <div class="frag-area-lbl" style="color:rgba(168,85,247,.7)">Arrange Here ↓</div>
+        <div class="frag-target" id="ftarget"></div>
+      </div>
+    </div>
+    <button class="submit-btn" id="reorder-sub">Cast the Spell (Submit)</button>`;
+  const pool = document.getElementById('fpool');
+  const target = document.getElementById('ftarget');
+  shuffled.forEach(f => {
+    const el = document.createElement('div');
+    el.className = 'frag-item'; el.textContent = f.code; el.dataset.id = f.id;
+    el.onclick = () => {
+      if (el.parentElement === pool) { el.classList.add('placed'); target.appendChild(el); }
+      else { el.classList.remove('placed'); pool.appendChild(el); }
+    };
+    pool.appendChild(el);
+  });
+  document.getElementById('reorder-sub').onclick = () => {
+    stopPuzzleTimer();
+    GS.totalAttempts++;
+    const order = Array.from(target.children).map(el => el.dataset.id).join(',');
+    if (order === p.answer) {
+      GS.correctAttempts++;
+      playSound('success');
+      setTimeout(() => onCorrect(), 300);
+    } else {
+      jumpScare();
+      updateStats();
+    }
+  };
+}
+
+function renderFill(c, p) {
+  c.innerHTML = `<div class="room-desc">${p.desc}</div>
+    <div class="code-blk">${p.code}</div>
+    <div style="margin-top:14px">
+      <div style="font-size:9px;color:var(--text-faint);letter-spacing:2px;text-align:center;margin-bottom:7px;text-transform:uppercase">Enter Your Answer</div>
+      <input class="fill-input" id="fill-inp" type="text" autocomplete="off" placeholder="Type your answer...">
+    </div>
+    <button class="submit-btn" id="fill-sub">Submit Answer</button>`;
+  const inp = document.getElementById('fill-inp');
+  const check = () => {
+    stopPuzzleTimer();
+    GS.totalAttempts++;
+    const val = inp.value.trim();
+    const normalized = p.answer.replace(/"/g, '');
+    if (val === p.answer || val === normalized || val.toLowerCase() === normalized.toLowerCase()) {
+      GS.correctAttempts++;
+      inp.classList.add('correct');
+      playSound('success');
+      setTimeout(() => onCorrect(), 300);
+    } else {
+      inp.classList.add('wrong');
+      jumpScare();
+      setTimeout(() => inp.classList.remove('wrong'), 600);
+      updateStats();
+    }
+  };
+  document.getElementById('fill-sub').onclick = check;
+  inp.onkeydown = e => { if (e.key === 'Enter') check(); };
+  setTimeout(() => inp.focus(), 100);
+}
+
+/* ═══════════════════════════════════════════════════
+   ON CORRECT
+═══════════════════════════════════════════════════ */
+function onCorrect() {
+  const elapsed = Math.floor((Date.now() - GS.currentPuzzleStart) / 1000);
+  GS.puzzleTimes.push(elapsed);
+
+  const d = DIFF[GS.difficulty];
+  const timeBonus = Math.max(0, d.time - elapsed) * 12;
+  const comboBonus = (GS.combo - 1) * 60;
+  const base = 100 * GS.currentLevel;
+  const total = base + timeBonus + comboBonus;
+
+  updateCombo(true);
+  if (!d.noRegen) updateSanity(8);
+  addScore(total, window.innerWidth / 2, 180);
+  updateStats();
+
+  document.getElementById('success-msg').textContent = `+${total} XP  (combo ×${GS.combo})`;
+  document.getElementById('success-ov').classList.add('active');
+  GS.inPuzzle = false;
+
+  if (GS.unlockedLevel === GS.currentLevel && GS.currentLevel < GS.maxLevels) {
+    GS.unlockedLevel++;
+  }
+
+  checkAchievements();
+
+  setTimeout(() => {
+    document.getElementById('success-ov').classList.remove('active');
+    stopPuzzleTimer();
+    document.getElementById('screen-game').classList.add('hidden');
+    if (GS.currentLevel >= GS.maxLevels) endGame(true);
+    else {
+      document.getElementById('screen-lobby').classList.remove('hidden');
+      renderLobby();
+    }
+  }, 3000);
+}
+
+/* ═══════════════════════════════════════════════════
+   AI ORACLE
+═══════════════════════════════════════════════════ */
+async function callAI(prompt) {
+  const resp = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: 1000,
+      messages: [{ role: 'user', content: prompt }]
+    })
+  });
+  const data = await resp.json();
+  return data.content?.map(b => b.text || '').join('') || 'The Oracle is silent...';
+}
+
+function updateHintCostUI() {
+  const d = DIFF[GS.difficulty];
+  document.getElementById('hint-cost-lbl').textContent = d.hintFree
+    ? 'Hints are FREE on Apprentice mode'
+    : `Cost: ${d.hintCost} points per hint`;
+}
+
+function setHintLoading(v) {
+  document.getElementById('btn-hint').disabled = v;
+  document.getElementById('btn-explain').disabled = v;
+  if (v) document.getElementById('hint-box').innerHTML = '<div class="ai-loading"><div class="ai-dot"></div><div class="ai-dot"></div><div class="ai-dot"></div></div>';
+}
+
+document.getElementById('btn-hint').onclick = async () => {
+  const p = GS.currentPuzzle;
+  if (!p) return;
+  const d = DIFF[GS.difficulty];
+  if (!d.hintFree) {
+    if (GS.score < d.hintCost) {
+      document.getElementById('hint-box').textContent = 'Not enough score for a hint. Earn more first!';
+      return;
+    }
+    addScore(-d.hintCost);
+  }
+  GS.hintsUsed++;
+  document.getElementById('ai-panel').classList.add('open');
+  setHintLoading(true);
+  try {
+    const codeText = p.code?.replace(/<[^>]+>/g, '') || '';
+    const ans = p.answer !== undefined ? (p.type === 'mcq' ? p.options?.[p.answer] : p.answer) : '';
+    const hint = await callAI(`You are the AI Oracle inside "Haunted Code Mansion", a horror-themed JavaScript quiz game. Give the player a genuine, helpful hint for this puzzle — do NOT reveal the answer directly, but guide them toward it. Keep it 1-2 sentences, slightly ominous/eerie in tone. Plain text only, no markdown.
+
+Puzzle: "${p.title}"
+Type: ${p.typeLabel}
+Code: ${codeText}
+Difficulty: ${GS.difficulty}
+${p.hint ? 'Pre-written hint: ' + p.hint : ''}`);
+    document.getElementById('hint-box').textContent = hint;
+  } catch {
+    document.getElementById('hint-box').textContent = p.hint || 'The Oracle cannot be reached through the fog...';
+  }
+  setHintLoading(false);
+};
+
+document.getElementById('btn-explain').onclick = async () => {
+  const p = GS.currentPuzzle;
+  if (!p) return;
+  document.getElementById('ai-panel').classList.add('open');
+  setHintLoading(true);
+  try {
+    const codeText = p.code?.replace(/<[^>]+>/g, '') || '';
+    const explanation = await callAI(`You are an AI educator inside "Haunted Code Mansion". Explain the core JavaScript concept being tested in this puzzle in 3-4 sentences. Be genuinely educational and clear. Slightly eerie tone is fine. No markdown, plain text only.
+
+Puzzle: "${p.title}"
+Code: ${codeText}
+Concept area: ${p.typeLabel}`);
+    document.getElementById('analysis-box').textContent = explanation;
+  } catch {
+    document.getElementById('analysis-box').textContent = 'The spirits block the Oracle\'s knowledge transfer...';
+  }
+  setHintLoading(false);
+};
+
+async function runAIAnalysis() {
+  const acc = GS.totalAttempts ? Math.round((GS.correctAttempts / GS.totalAttempts) * 100) : 0;
+  const avgTime = GS.puzzleTimes.length ? Math.round(GS.puzzleTimes.reduce((a,b)=>a+b,0)/GS.puzzleTimes.length) : 0;
+  try {
+    const analysis = await callAI(`You are an AI performance coach inside "Haunted Code Mansion". Give a 2-3 sentence performance analysis in a slightly ominous tone. Be constructive and personalized. No markdown.
+
+Stats: accuracy ${acc}%, avg solve time ${avgTime}s, rooms cleared ${GS.unlockedLevel-1}, hints used ${GS.hintsUsed}, difficulty ${GS.difficulty}, max combo ${GS.maxCombo}x.`);
+    document.getElementById('analysis-box').textContent = analysis;
+  } catch {}
+}
+
+/* ═══════════════════════════════════════════════════
+   ACHIEVEMENTS
+═══════════════════════════════════════════════════ */
+const ACHIEVEMENTS = [
+  { id: 'first_blood', name: 'First Blood', desc: 'Complete your first room', icon: '🩸', check: () => GS.unlockedLevel >= 2 },
+  { id: 'speedster', name: 'Ghost Speed', desc: 'Solve a puzzle in under 5 seconds', icon: '⚡', check: () => GS.puzzleTimes.some(t => t < 5) },
+  { id: 'no_hints', name: 'Blind Witch', desc: 'Clear 5 rooms without any hints', icon: '👁', check: () => GS.hintsUsed === 0 && GS.unlockedLevel >= 6 },
+  { id: 'combo5', name: 'Combo Wraith', desc: 'Achieve a ×5 combo', icon: '🔥', check: () => GS.maxCombo >= 5 },
+  { id: 'halfway', name: 'Deep Descent', desc: 'Clear the first 7 rooms', icon: '🗝', check: () => GS.unlockedLevel >= 8 },
+  { id: 'survivor', name: 'Survivor', desc: 'Escape the mansion!', icon: '💀', check: () => GS.unlockedLevel > GS.maxLevels },
+];
+
+function checkAchievements() {
+  ACHIEVEMENTS.forEach(a => {
+    if (!GS.achievements.includes(a.id) && a.check()) {
+      GS.achievements.push(a.id);
+      showAchievement(a);
+    }
+  });
+  if (GS.currentLevel % 3 === 0) runAIAnalysis();
+}
+
+function showAchievement(a) {
+  const el = document.createElement('div');
+  el.className = 'ach-toast';
+  el.innerHTML = `<div class="ach-icon">${a.icon}</div><div><div class="ach-name">Achievement: ${a.name}</div><div class="ach-desc">${a.desc}</div></div>`;
+  document.body.appendChild(el);
+  setTimeout(() => el.style.opacity = '0', 4500);
+  setTimeout(() => el.remove(), 5200);
+}
+
+/* ═══════════════════════════════════════════════════
+   END GAME
+═══════════════════════════════════════════════════ */
+function endGame(victory) {
+  clearInterval(gTimerInt);
+  stopPuzzleTimer();
+  GS.inPuzzle = false;
+  document.getElementById('screen-game').classList.add('hidden');
+  document.getElementById('screen-lobby').classList.add('hidden');
+  document.getElementById('hud').classList.add('hidden');
+
+  const acc = GS.totalAttempts ? Math.round((GS.correctAttempts / GS.totalAttempts) * 100) + '%' : '—';
+  const rooms = GS.unlockedLevel - 1;
+
+  if (victory) {
+    batSwarm(80, window.innerWidth / 2, window.innerHeight / 2);
+    document.getElementById('win-score').textContent = GS.score.toLocaleString();
+    document.getElementById('win-rooms').textContent = rooms;
+    document.getElementById('win-acc').textContent = acc;
+    document.getElementById('screen-win').classList.remove('hidden');
+  } else {
+    playSound('scare');
+    document.getElementById('go-score').textContent = GS.score.toLocaleString();
+    document.getElementById('go-rooms').textContent = rooms;
+    document.getElementById('go-acc').textContent = acc;
+    document.getElementById('screen-go').classList.remove('hidden');
+  }
+
+  // Auto-save
+  const name = localStorage.getItem('hcm_player') || 'Anonymous';
+  const entries = getLB();
+  entries.unshift({ name, score: GS.score, level: rooms, diff: GS.difficulty, date: new Date().toLocaleDateString() });
+  saveLB(entries);
+}
+
+/* ═══════════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════════ */
+window.onload = () => {
+  scheduleLightning();
+  renderLB();
+  const btn = document.getElementById('btn-enter');
+  btn.onmouseover = () => playSound('hover');
+  // Window flicker
+  setInterval(() => {
+    const wins = ['w1','w2','w3'];
+    const w = document.getElementById(wins[Math.floor(Math.random()*wins.length)]);
+    if (w) {
+      const orig = w.getAttribute('opacity');
+      w.setAttribute('opacity', String(Math.random() * 0.4 + 0.4));
+      setTimeout(() => w.setAttribute('opacity', orig), 150);
+    }
+  }, 1800);
+};
+</script>
+</body>
+</html>
